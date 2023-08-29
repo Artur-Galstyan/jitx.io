@@ -1,7 +1,10 @@
 <nav class="flex">
     <div class="flex flex-1">
-        <a class="cursor-pointer" href="/">
-            <img src="/logo.webp" alt="Logo" class="w-48 h-48" />
+        <a
+            class="cursor-pointer hover:bg-blue-600 hover:bg-opacity-20 transition duration-150 ease-in-out rounded-xl m-4"
+            href="/"
+        >
+            <img src="/logo.webp" alt="Logo" class="w-36 h-36" />
         </a>
         <div class="my-auto">
             <span
@@ -12,7 +15,7 @@
             <div class="my-auto italic">
                 AI Projects and Software Engineering
             </div>
-            <div class="text-xs text-gray-400">by Arthur A. Galstyan</div>
+            <div class="text-xs text-gray-400">by Artur A. Galstyan</div>
         </div>
     </div>
 </nav>

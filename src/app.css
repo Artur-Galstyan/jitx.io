@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+    code {
+        @apply mx-0 px-0 !important;
+    }
+}
