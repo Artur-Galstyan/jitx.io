@@ -1,8 +1,16 @@
 <script lang="ts">
     import { page } from "$app/stores";
+    import HintBox from "$lib/components/HintBox.svelte";
     import type { Post } from "@prisma/client";
 
     const post: Post = $page.data.post;
+
+    let index = 0;
+
+    const i = () => {
+        index += 1;
+        return index;
+    };
 </script>
 
 <div class="prose text-justify">
@@ -27,7 +35,7 @@
 
     <div class="divider" />
     <section>
-        <h2>Introduction</h2>
+        <h2>{i()}. Introduction</h2>
         <p>
             In July 2023, the team at Meta have announced the
             <a
@@ -56,13 +64,40 @@
     </section>
 
     <section>
-        <h2>Preparations</h2>
+        <h2>{i()}. Preparations</h2>
         <p>
             If you want to follow along with this journey, you'll need a GPU
             with preferably 24 GBs of VRAM, which should give you enough
             headroom. The 7B model itself - using <code>float16</code> - only takes
-            up to ~16 GBs of VRAM, but it's good to have more, as Jax is a bit more
-            memory hungry as we will see in just a bit.
+            up to ~16 GBs of VRAM, but it's good to have more, as Jax can be a bit
+            more memory hungry as we will see in just a bit.
         </p>
+        <div>
+            To get started, you'll first need to download the weights from Meta
+            from <a href="https://ai.meta.com/llama/#resources">here</a> and
+            then you'll need to fork their
+            <a href="https://github.com/facebookresearch/llama">repository</a>.
+            Install all the dependencies using
+            <pre><code>pip install -e .</code></pre>
+            and if you encounter no errors, you should be good to go. You can verify
+            that everything works by running their test example
+            <pre><code
+                    >torchrun --nproc_per_node 1 example_text_completion.py \
+                --ckpt_dir llama-2-7b/ \
+                --tokenizer_path tokenizer.model \
+                --max_seq_len 128 --max_batch_size 4</code
+                ></pre>
+            and it should output the meaning of life or something like that 🤷. I
+            found myself running that example many times to verify the shapes of
+            the matrices when porting it over. So, it can be extremely useful to
+            have a working reference running!
+        </div>
+        <p>
+            Everything works? In a twist of irony you now know meaning of life
+            as provided by a lifeless machine? Great. Then let's start with Jax!
+        </p>
+    </section>
+    <section>
+        <h2 class="text-accent">{i()}. Porting it over</h2>
     </section>
 </div>

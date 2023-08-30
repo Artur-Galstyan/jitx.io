@@ -1,3 +1,6 @@
+<script lang="ts">
+</script>
+
 <main class="flex justify-center">
     <slot />
 </main>
