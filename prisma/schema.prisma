@@ -16,6 +16,7 @@ model Post {
   tags             String[]
   shortDescription String?
   repositoryLink   String?
+  draft            Boolean? @default(true)
 }
 
 model Account {
