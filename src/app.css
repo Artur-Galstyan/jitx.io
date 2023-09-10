@@ -6,4 +6,7 @@
     code {
         @apply mx-0 px-0 !important;
     }
+
+    figure {
+    }
 }
