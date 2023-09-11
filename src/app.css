@@ -4,6 +4,6 @@
 
 @layer components {
     pre {
-        @apply bg-none p-0;
+        @apply bg-none  !important;
     }
 }
