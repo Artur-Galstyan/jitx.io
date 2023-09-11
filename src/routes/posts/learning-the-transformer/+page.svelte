@@ -68,7 +68,8 @@
             the crux of the transformer: <b>self-attention</b>. So, grab a cup
             of coffee, <b>pen and paper</b> and let's get started!
         </p>
-
+    </section>
+    <section>
         <h2>{i()}. Overview</h2>
         <p>
             Before we dive into the transformer, it's helpful to start with a
@@ -120,6 +121,8 @@
             important being the <b>Multi-Head Attention</b> block. But we're getting
             ahead of ourselves. Let's start at the beginning.
         </p>
+    </section>
+    <section>
         <h2>{i()}. The Input</h2>
         <p>
             First, we have our input tokens. In machine learning, <b
@@ -162,7 +165,26 @@ print(f"{decoded=}")
             ></pre>
         <pre><code class="language-plaintext">{`decoded='hello, world'`}</code
             ></pre>
-        In this example, <Katex math={"D"} /> is 50257.
+        In this example, <Katex math={"D"} /> is 50257. But it makes sense to extend
+        this number to the nearest multiple of 64 for 2 reasons: first, it will make
+        <Katex math={"D"} /> divisible by 2, which will be important later and secondly,
+        GPUs like multiples of 64 for efficiency reasons.
+        <HintBox
+            content={"Think of your 64-bit computer: if you have a 32 bit number, your computer has to perform more work, to handle a 32 bit number, while it's simplier to deal with 64 bit numbers if your system is designed with 64 bits in mind. (Extreme simplification at this point!)"}
+        />
+        <p>
+            So, let's change the code a bit to extend <Katex math={"D"} /> to the
+            nearest multiple of 64.
+        </p>
+        <pre><code class="language-python"
+                >{`def get_next_multiple_of_64(number: int) -> int:
+    while number % 64 != 0:
+        number += 1
+    return number
+
+n_vocab = get_next_multiple_of_64(enc.n_vocab)
+`}</code
+            ></pre>
         <p>
             Next up is the input embeddings, which is a simple embedding layer.
             You embed the input (which has dimensionality <Katex math={"D"} />)
@@ -186,26 +208,69 @@ class Transformer(eqx.Module):
 
 key = jax.random.PRNGKey(42)
 N_EMBD = 4096
-transformer = Transformer(n_dims=enc.n_vocab, n_embd=N_EMBD, key=key)
+transformer = Transformer(n_dims=n_vocab, n_embd=N_EMBD, key=key)
 print(f"{transformer.input_embedding.weight.shape=}")
 print(f"Number of bits = {transformer.input_embedding.weight.shape[0] * transformer.input_embedding.weight.shape[1] * 32}")
 `}</code
             ></pre>
         <pre><code class="language-plaintext"
-                >{`transformer.input_embedding.weight.shape=(50257, 4096)
-Number of bits = 6587285504`}</code
+                >{`transformer.input_embedding.weight.shape=(50304, 4096)
+Number of bits = 6593445888`}</code
             ></pre>
         <p>
-            As you can see, our input embedding is quite large. It holds 50257 *
-            4096 * 32 bits worth of information. That's around 823.410
-            megabytes, just for the input embedding.
+            As you can see, our input embedding is quite large. It holds 50304 *
+            4096 * 32 bits worth of information. That's around 824 megabytes,
+            just for the input embedding.
         </p>
 
         <p>
             Next up is the positional encoding. This one is a bit tricky since
             there are many different ways to compute the positional encoding (it
-            can even be learned too).
+            can even be learned too). However, it's way more efficient to come
+            up with some strategy which adds positional information to our
+            inputs.
         </p>
+        <HintBox
+            content={"This is important, because the attention mechanism is completely position agnostic. We will see a concrete example why this is the case."}
+        />
+        The authors used a sinusoidal positional encoding. But actually, anything
+        goes, as long as you give each token a value that represents its position
+        relative to all the other tokens. LLaMA, for example, uses a different kind
+        of positional encoding, called "Rope Embeddings", but that's a story for
+        another blog post. For now, let's implement the positional encoding:
+
+        <pre><code class="language-python"
+                >{`def get_positional_encoding(n_tokens: int, n_vocab: int) -> Float[Array, "n_tokens n_vocab"]:     
+    pos = jnp.arange(n_tokens)[:, jnp.newaxis]
+    div_term = jnp.exp(jnp.arange(0, n_vocab, 2) * -(jnp.log(10000.0) / n_vocab))
+    # alternatively: div_term = 1 / 10000 ** (jnp.arange(0, D, 2) / D) 
+    # that's closer to the actual notation they used. 
+    pos_enc = jnp.zeros((n_tokens, n_vocab))
+    pos_enc = pos_enc.at[:, 0::2].set(jnp.sin(pos * div_term))
+    pos_enc = pos_enc.at[:, 1::2].set(jnp.cos(pos * div_term))
+    return pos_enc `}</code
+            ></pre>
+        If you had a lot of GPUs you could even learn the positional encodings directly
+        by simply adding another embedding layer to our transformer. But given how
+        much memory just the input embeddings took, it might not be the most efficient
+        idea. In practice, both approaches yield similar results (<span
+            class="text-warning">citation needed</span
+        >).
+
+        <p>
+            Our input part is almost done. All that's left is to simply compute
+            the positional encodings and add them to the input matrix, before
+            feeding the input to the multi-head attention (MHA) block. We will
+            come back to this part when we actually start training our
+            transformer.
+        </p>
+        <section>
+            <h2>{i()}. Multi-Head Attention</h2>
+            <p>
+                Okay, now we get to the most interesting part and to the heart
+                of the transformer.
+            </p>
+        </section>
     </section>
     <p class="text-center text-warning">To be continued...</p>
 </div>
