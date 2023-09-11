@@ -255,7 +255,14 @@ Number of bits = 6593445888`}</code
         much memory just the input embeddings took, it might not be the most efficient
         idea. In practice, both approaches yield similar results (<span
             class="text-warning">citation needed</span
-        >).
+        >). And this is also precisely why we wanted to have even numbered
+        dimensions earlier and why we extended <Katex math={"D"} /> to the nearest
+        multiple of 64 (making it an even number). We did that, because we want to
+        apply <Katex math={"sin"} /> and <Katex math={"cos"} /> to every second dimension,
+        meaning we needed an even number of dimensions to begin with.
+        <span class="text-warning"
+            >This might not have been the best explanation; might improve that</span
+        >
 
         <p>
             Our input part is almost done. All that's left is to simply compute
