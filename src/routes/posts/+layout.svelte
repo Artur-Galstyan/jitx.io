@@ -3,6 +3,8 @@
 
 <svelte:head />
 <main class="flex justify-center">
-    <slot />
+    <div class="w-[95%] md:w-[90%] mx-auto">
+        <slot />
+    </div>
 </main>
 <div class="h-[40rem]" />

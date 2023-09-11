@@ -29,7 +29,7 @@
     });
 </script>
 
-<div class="prose text-justify">
+<div class="prose text-justify mx-auto">
     <h1 class="text-center font-extrabold py-0 my-0">
         {post.title}
     </h1>
@@ -76,7 +76,7 @@
             high level overview first. In the following figure, you can see the
             transformer architecture.
         </p>
-        <div class="flex justify-center space-x-4">
+        <div class=" flex justify-center space-x-4">
             <figure class="flex flex-col">
                 <img
                     src={getStaticFile("Transformer.drawio.svg")}
