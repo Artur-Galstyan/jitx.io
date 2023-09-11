@@ -48,7 +48,7 @@
             class="w-1/3 mx-auto rounded-xl p-0 m-0 mt-4"
         />
 
-        <div class="text-sm text-gray-400 text-center">An image of a LLaMA</div>
+        <div class="text-sm text-gray-400 text-center">An Image of a LLaMA</div>
     </div>
 
     <div class="divider" />
@@ -264,13 +264,203 @@ Number of bits = 6593445888`}</code
             come back to this part when we actually start training our
             transformer.
         </p>
-        <section>
-            <h2>{i()}. Multi-Head Attention</h2>
-            <p>
-                Okay, now we get to the most interesting part and to the heart
-                of the transformer.
-            </p>
-        </section>
+    </section>
+    <section>
+        <h2>{i()}. Multi-Head Attention</h2>
+        <p>
+            Okay, now we get to the most interesting part and to the heart of
+            the transformer. In the earlier figures I had just shown an overview
+            where MHA was just a single box, but there's a lot going on in that
+            box. So let's zoom in a bit.
+        </p>
+        <div class="flex justify-center space-x-4">
+            <figure class="flex flex-col space-y-4">
+                <img
+                    src={getStaticFile("MHA.drawio.svg")}
+                    alt="MHA"
+                    class="h-full"
+                />
+                <div class="text-sm text-gray-400 text-center">
+                    Multi-Head Attention
+                </div>
+            </figure>
+        </div>
+        <p>
+            Before we dive deep into the <i>how</i> and <i>why</i>, let's first
+            identify our trainable parameters. As you can see, there are 4
+            linear layers: 3 for the <i>query, key</i> and
+            <i>value</i> (whatever those are, we don't know just yet) and another
+            one at the end. Let's implement a first draft and figure out the rest
+            later.
+        </p>
+        <pre><code class="language-python"
+                >{`class MultiHeadAttention(eqx.Module):
+    query: eqx.nn.Linear
+    key: eqx.nn.Linear
+    value: eqx.nn.Linear
+
+    output: eqx.nn.Linear
+    def __init__(self, qkv_size: int, dim: int, key: PRNGKeyArray) -> None:
+        key, *subkeys = jax.random.split(key, 4)
+
+        # These dimensions are wrong! We will fix them shortly though :)
+        self.query = eqx.nn.Linear(in_features=qkv_size, out_features=dim, key=subkeys[0], use_bias=False)
+        self.key = eqx.nn.Linear(in_features=qkv_size, out_features=dim, key=subkeys[1], use_bias=False)
+        self.value = eqx.nn.Linear(in_features=qkv_size, out_features=dim, key=subkeys[2], use_bias=False)
+
+        self.output = eqx.nn.Linear() # I'll leave this one open for now, but this will be discussed shortly, I promise ;)
+`}</code
+            ></pre>
+        <p>
+            We will come back and fix the above code in just a minute, but at
+            this point it's time for an insertion!
+        </p>
+    </section>
+    <section>
+        <h2>
+            Insertion: What's the difference between "normal" attention and self
+            attention?
+        </h2>
+        <p>
+            A good question! Attention in machine learning is nothing new and
+            has been used plenty before. However, attention was often calculated <i
+                >in relation to another query</i
+            >, like a question for example. Take a look at the following
+            example:
+        </p>
+        <div class="text-italic">
+            <p>Query: Doughnuts are tasty! What's the capital of Germany?</p>
+            <p>A: The capital of Germany is Berlin.</p>
+        </div>
+        <p>
+            In this example, in the answer the attention of the words <i
+                >capital</i
+            >
+            and <i>Germany</i> are high, as they coincide with the query a lot!
+            In fact, if you think about it, there is little to no need to pay
+            attention to the doughnut part. As you can see, in this example,
+            attention is computed
+            <i>relative to some other query</i>.
+        </p>
+        <p>
+            In self attention, on the other hand, the attention scores are
+            calculated <b>within the sentence itself</b>!
+        </p>
+        <figure class="flex flex-col space-y-4">
+            <img
+                src={getStaticFile("SelfAttention.drawio.svg")}
+                alt="SelfAttention"
+                class="h-full"
+            />
+            <div class="text-sm text-gray-400 text-center">
+                Self Attention Example
+            </div>
+        </figure>
+    </section>
+    <section>
+        <h2>Multi-Head Attention (again)</h2>
+        <p>
+            Okay, so what's up with these query, key and value vectors? The idea
+            for those comes from recommender systems. Think about YouTube. What
+            you search for is the <b>query</b>, for example: <i>funny cats</i>.
+            YouTube has a huge database of multiple <b>keys</b> such as
+            <i>video title</i>, <i>description</i> etc. Let's say there are only
+            3 videos in total on YouTube with the following titles:
+        </p>
+        <ul>
+            <li>cats walking</li>
+            <li>horses running</li>
+            <li>dogs jumping</li>
+        </ul>
+        <p>
+            Your query is matched against all of these <b>keys</b> to see which
+            one fits best. Let's say, their recommender systems computes these
+            <b>values</b>:
+        </p>
+        <ul>
+            <li>cats walking - 0.7</li>
+            <li>horses running - 0.1</li>
+            <li>dogs jumping - 0.2</li>
+        </ul>
+        <p>
+            As you can see, the first video has the highest <b>value</b>. The
+            one with the highest value is the one you care most about, i.e.
+            <b>pay most attention to</b>.
+        </p>
+        <p>
+            In self attention, we don't have any external keys (otherwise we
+            would have "normal" attention). In our case, the input itself is
+            both <b>query</b> and <b>key</b>! This is what people mean by self
+            attention. The query, key and value vector you saw in the figure
+            above: they're all the same (check circle with the number 1)! The
+            input (after it had the positional encodings added to it) is
+            duplicated 3 times and each copy is named the query, key and value.
+            Let's say the input is the text "How are you". Both query and key
+            contain the phrase "How are you" (in the form of numbers though, but
+            we will get to that). We pass those vectors through the linear
+            layers and then matrix multiply those results. The goal of the query
+            linear layer is to learn what parts of the query tokens each token
+            should pay most attention to (2). The key linear layer learns what
+            tokens are most suitable to answer to the query tokens (2). The
+            matrix multiplication of these matrices yields a
+            <i>score</i> matrix, which holds the self attention information. In our
+            simplified example:
+        </p>
+        <figure class="flex flex-col space-y-4">
+            <img
+                src={getStaticFile("SASimple.drawio.svg")}
+                alt="Example"
+                class="h-full"
+            />
+            <div class="text-sm text-gray-400 text-center">
+                Attention Score Matrix
+            </div>
+        </figure>
+        <p>
+            The result of the matrix multiplication of <b>query</b> and
+            <b>key</b> can lead to very large numbers, which is why after the
+            multiplication the result is scaled down, which also allows for more
+            stable gradients later. Typically, the results are scaled down
+            relative to the chosen dimensionality (what we named
+            <code>dim</code> in our code above). More specifically, the scaling is:
+        </p>
+        <Katex math={"\\frac{scores}{\\sqrt{d_k}},"} displayMode />
+        <p>
+            where <Katex math={"d_k"} /> is our chosen dimension for the linear layers.
+            When we apply a softmax afterwords, we turn the attention weights into
+            probabilities. At the end, we multiply the attention weights (i.e. query
+            @ key) with the value vector. The idea is that the attention weights
+            <i>highlight</i>
+            the important parts in the value vector and <i>diminish</i> that which
+            we should not pay any attention to.
+        </p>
+        <p>
+            So far, we have only taked about a <i>single</i> attention
+            <b>head</b>. In a transformer, MHAs have <i>multiple</i> heads
+            (hence the name). This means the input is not split once into query,
+            key and value, but rather <Katex math={"n_{heads}"} /> times (3). Oh
+            no! Another parameter! <b>Quick,</b> let's add that to our implementation!
+        </p>
+        <pre><code class="language-python"
+                >{`class MultiHeadAttention(eqx.Module):
+    query: eqx.nn.Linear
+    key: eqx.nn.Linear
+    value: eqx.nn.Linear
+
+    output: eqx.nn.Linear
+    def __init__(self, input_dim: int, dim: int, n_heads: int, key: PRNGKeyArray) -> None:
+        key, *subkeys = jax.random.split(key, 4)
+
+        qkv_size = input_dim // n_heads
+        
+        self.query = eqx.nn.Linear(in_features=qkv_size, out_features=dim * n_heads, key=subkeys[0], use_bias=False)
+        self.key = eqx.nn.Linear(in_features=qkv_size, out_features=dim * n_heads, key=subkeys[1], use_bias=False)
+        self.value = eqx.nn.Linear(in_features=qkv_size, out_features=dim * n_heads, key=subkeys[2], use_bias=False)
+
+        self.output = eqx.nn.Linear(in_features=input_dim, out_features=input_dim, key=subkeys[3], use_bias=False) 
+`}</code
+            ></pre>
+        <p>Uff, quite a lot changed, so let's have a look.</p>
     </section>
     <p class="text-center text-warning">To be continued...</p>
 </div>
