@@ -3,4 +3,7 @@
 @tailwind utilities;
 
 @layer components {
+    pre > code {
+        @apply text-white !important;
+    }
 }
