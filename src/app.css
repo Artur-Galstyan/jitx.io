@@ -3,11 +3,4 @@
 @tailwind utilities;
 
 @layer components {
-    pre {
-        @apply bg-none !important;
-    }
-
-    pre > code {
-        @apply p-2 !important;
-    }
 }

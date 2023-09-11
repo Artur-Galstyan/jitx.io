@@ -7,7 +7,16 @@ export default {
     plugins: [require("@tailwindcss/typography"), require("daisyui")],
     daisyui: {
         themes: [
-            "emerald" // first one will be the default theme
+            {
+                emerald: {
+                    ...require("daisyui/src/theming/themes")[
+                        "[data-theme=emerald]"
+                    ],
+                    pre: {
+                        padding: 2
+                    }
+                }
+            }
         ]
     }
 };
