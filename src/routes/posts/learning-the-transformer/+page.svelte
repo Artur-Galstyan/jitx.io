@@ -69,6 +69,9 @@
             of coffee, <b>pen and paper</b> and let's get started!
         </p>
     </section>
+    <HintBox
+        content={"You'll probably have to re-read this blog a couple of time to really understand the transformer. In a lot of places, you will see things like \"this will be explained later\", which can disrupt the flow of reading. Therefore, don't worry if you don't undestand it on the first try. Most people don't. Just keep re-reading until it clicks! 🙃"}
+    />
     <section>
         <h2>{i()}. Overview</h2>
         <p>
@@ -460,14 +463,149 @@ Number of bits = 6593445888`}</code
 
         qkv_size = input_dim // n_heads
         
-        self.query = eqx.nn.Linear(in_features=qkv_size, out_features=dim * n_heads, key=subkeys[0], use_bias=False)
-        self.key = eqx.nn.Linear(in_features=qkv_size, out_features=dim * n_heads, key=subkeys[1], use_bias=False)
-        self.value = eqx.nn.Linear(in_features=qkv_size, out_features=dim * n_heads, key=subkeys[2], use_bias=False)
+        self.query = eqx.nn.Linear(in_features=input_dim, out_features=dim * n_heads, key=subkeys[0], use_bias=False)
+        self.key = eqx.nn.Linear(in_features=input_dim, out_features=dim * n_heads, key=subkeys[1], use_bias=False)
+        self.value = eqx.nn.Linear(in_features=input_dim, out_features=dim * n_heads, key=subkeys[2], use_bias=False)
 
         self.output = eqx.nn.Linear(in_features=input_dim, out_features=input_dim, key=subkeys[3], use_bias=False) 
 `}</code
             ></pre>
-        <p>Uff, quite a lot changed, so let's have a look.</p>
+        <p>
+            Uff, quite a lot changed, so let's have a look. We first added the
+            number of heads as a parameter to the init function. But what's up
+            with <code>qkv_size</code>? Well, we need to split the input
+            dimension <Katex math={"D"} /> into the number of heads. That way, each
+            head gets the chance to learn something new for its dimension, independently
+            of the other heads, which are all busy with their respective slice of
+            the input dimension. As you can see, the output layer has the same in
+            and out feature dimension (4). The reason for that is the "concatenate"
+            block you saw earlier, which
+            <i>concatenates</i> all the outputs of the single attention heads
+            into a single matrix, which has the same shape as the original input
+            (which was split <code>n_heads</code> times). So why is there a
+            <code>dim * n_heads</code> for each of the first 3 linear layers?
+            Think of it this way: alternatively, you could have created a list
+            of those linear layers and iterated each head one at a time.
+            <b>But</b> that's a huge waste of computation! Instead, it's much better
+            to just simply enlarge the linear layers and then - at the end - reshape
+            the matrices to our desired size. We will see that in just a bit.
+        </p>
+        <p>
+            Alright, let's implement the MHA block (without masking just yet)
+            and walk through all the parts.
+        </p>
+        <pre><code class="language-python"
+                >{`class MultiHeadAttention(eqx.Module):
+    n_heads: int = eqx.field(static=True)
+    qkv_size: int = eqx.field(static=True)
+
+    query: eqx.nn.Linear
+    key: eqx.nn.Linear
+    value: eqx.nn.Linear
+
+    output: eqx.nn.Linear
+    def __init__(self, input_dim: int, dim: int, n_heads: int, key: PRNGKeyArray) -> None:
+        key, *subkeys = jax.random.split(key, 5)
+
+        self.qkv_size = input_dim // n_heads
+        
+        self.query = eqx.nn.Linear(in_features=input_dim, out_features=n_heads * self.qkv_size, key=subkeys[0], use_bias=False)
+        self.key = eqx.nn.Linear(in_features=input_dim, out_features=n_heads * self.qkv_size, key=subkeys[1], use_bias=False)
+        self.value = eqx.nn.Linear(in_features=input_dim, out_features=n_heads * self.qkv_size, key=subkeys[2], use_bias=False)
+
+        self.output = eqx.nn.Linear(in_features=input_dim, out_features=input_dim, key=subkeys[3], use_bias=False) 
+
+        self.n_heads = n_heads
+
+    def _project(self, proj, x):
+        seq_length, _ = x.shape
+        projection = jax.vmap(proj)(x)
+        return projection.reshape(seq_length, self.n_heads, -1)
+
+    def __call__(self, x: Array):
+        T, _ = x.shape
+
+        q = self._project(self.query, x)
+        k = self._project(self.key, x)
+        v = self._project(self.value, x)
+
+
+        dot_product_vmap = jax.vmap(
+            lambda q, k: jnp.dot(q, k.T), 
+            in_axes=(1, 1), 
+            out_axes=1
+        )
+        attention_scores = dot_product_vmap(q, k)
+        # TODO: apply masking if needed - we'll get to this later
+        attention_scores = attention_scores / jnp.sqrt(self.qkv_size)
+        attention_scores = jax.nn.softmax(attention_scores)
+        matmul_vmap = jax.vmap(
+            lambda s, v: jnp.dot(s, v), 
+            in_axes=(1, 1), 
+            out_axes=1
+        )
+
+        output = matmul_vmap(attention_scores, v)
+        output = output.reshape(T, -1)
+        output = jax.vmap(self.output)(output)
+
+        return output
+`}</code
+            ></pre>
+        <p>
+            Oh, that's quite a lot. Let's break all that down, step-by-step. The
+            first couple of lines are Equinox specific ways to indicate static
+            fields of the module, which are not meant to be trained during
+            backpropagation later. In other libraries, you'll have to check how
+            to specify static fields (in PyTorch, you can just assign those to <code
+                >self</code
+            >).
+        </p>
+        <pre><code class="language-python"
+                >{`# this is Equinox specific
+    n_heads: int = eqx.field(static=True)
+    qkv_size: int = eqx.field(static=True)
+`}</code
+            ></pre>
+        <p>
+            Then, we have the <code>__init__</code> method:
+        </p>
+        <pre><code class="language-python"
+                >{`def __init__(self, input_dim: int, dim: int, n_heads: int, key: PRNGKeyArray) -> None:
+        key, *subkeys = jax.random.split(key, 5)
+
+        self.qkv_size = input_dim // n_heads
+        
+        self.query = eqx.nn.Linear(in_features=input_dim, out_features=n_heads * self.qkv_size, key=subkeys[0], use_bias=False)
+        self.key = eqx.nn.Linear(in_features=input_dim, out_features=n_heads * self.qkv_size, key=subkeys[1], use_bias=False)
+        self.value = eqx.nn.Linear(in_features=input_dim, out_features=n_heads * self.qkv_size, key=subkeys[2], use_bias=False)
+
+        self.output = eqx.nn.Linear(in_features=input_dim, out_features=input_dim, key=subkeys[3], use_bias=False) 
+
+        self.n_heads = n_heads
+`}</code
+            ></pre>
+        <p>
+            I mentioned earlier that - since we have <Katex math={"n"} /> heads -
+            we need to split the input. Currently the input has the shape of <Katex
+                math={"[T \\times D]"}
+            />, where <Katex math={"T"} /> is the number of tokens and <Katex
+                math={"D"}
+            /> is the number of dimensions of the input (see
+            <code>enc.n_vocab</code>). However, after applying the linear
+            layers, we want the query, key and value matrices to have the shape <Katex
+                math={"[T \\times h \\times d]"}
+            />, where <Katex math={"h"} /> is the number of heads and <Katex
+                math={"d"}
+            /> is equal to <Katex math={"D / h"} />, i.e. the number of
+            dimensions of the original input divided by the number of heads.
+            This is another reason why we wanted the dimension to be the nearest
+            multiple of 64: if we make <code>n_heads</code> equal to a multiple
+            of 32 for example, we are guaranteed an even division for <Katex
+                math={"d"}
+            />.
+        </p>
+        <p />
     </section>
     <p class="text-center text-warning">To be continued...</p>
 </div>
