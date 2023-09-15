@@ -14,7 +14,7 @@
             </div>
         </div>
         <p class="text-justify text-info">
-            {content}
+            {@html content}
         </p>
     </div>
 </div>
