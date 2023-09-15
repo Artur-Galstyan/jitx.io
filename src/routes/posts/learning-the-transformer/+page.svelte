@@ -32,6 +32,12 @@
     });
 </script>
 
+<svelte:head>
+    <title>
+        {post.title}
+    </title>
+</svelte:head>
+
 <div class="prose text-justify mx-auto">
     <h1 class="text-center font-extrabold py-0 my-0">
         {post.title}
