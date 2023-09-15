@@ -7,6 +7,8 @@
     import hljs from "highlight.js";
     import python from "highlight.js/lib/languages/python";
     import Figure from "$lib/components/Figure.svelte";
+    import Icon from "svelte-icons-pack";
+    import AiOutlineGithub from "svelte-icons-pack/ai/AiOutlineGithub";
     hljs.registerLanguage("python", python);
     const post: Post = $page.data.post;
 
@@ -51,7 +53,24 @@
 
         <div class="text-sm text-gray-400 text-center">An Image of a LLaMA</div>
     </div>
-
+    {#if post.repositoryLink}
+        <div class="flex justify-center my-12 mask mask-circle">
+            <button
+                on:click={() => {
+                    if (post.repositoryLink) {
+                        window.location.href = post.repositoryLink;
+                    }
+                }}
+            >
+                <Icon
+                    src={AiOutlineGithub}
+                    size="64"
+                    color="purple"
+                    className="transition hover:bg-green-100 ease-in-out duration-150"
+                />
+            </button>
+        </div>
+    {/if}
     <div class="divider" />
     <section>
         <h2>{i()}. Introduction</h2>
