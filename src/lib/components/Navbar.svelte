@@ -4,7 +4,7 @@
             class="cursor-pointer hover:bg-blue-600 hover:bg-opacity-20 transition duration-150 ease-in-out rounded-xl m-4"
             href="/"
         >
-            <img src="/logo.webp" alt="Logo" class="w-36 h-36" />
+            <img src="/logo1.webp" alt="Logo" class="w-36 p-1" />
         </a>
         <div class="my-auto">
             <span

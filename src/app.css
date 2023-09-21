@@ -7,3 +7,7 @@
         @apply text-white !important;
     }
 }
+
+p {
+    text-align: justify !important;
+}
