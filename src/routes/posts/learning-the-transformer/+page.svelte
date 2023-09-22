@@ -38,7 +38,7 @@
     </title>
 </svelte:head>
 
-<div class="prose text-justify mx-auto">
+<div class="text-justify mx-auto">
     <h1 class="text-center font-extrabold py-0 my-0">
         {post.title}
     </h1>
@@ -793,7 +793,7 @@ output = matmul_vmap(attention_scores, v)
         </p>
     </section>
     <section>
-        <h3>Insertion: Masking</h3>
+        <h2>Insertion: Masking</h2>
         <p>
             In general, the decoder takes the output of the encoder (in an
             encoder-decoder architecture) and generates data off of it while
@@ -856,7 +856,7 @@ output = matmul_vmap(attention_scores, v)
         </p>
     </section>
     <section>
-        <h3>Multi-Head Attention (again, again)</h3>
+        <h2>Multi-Head Attention (again, again)</h2>
         <p>
             I alluded earlier to the special mask vector and now, I'll show you
             how to generate it. Let's look at a smaller example, just so we can
@@ -1047,7 +1047,7 @@ transformer = Transformer(n_dims=n_vocab, n_embd=N_EMBD, n_heads=N_HEADS, key=ke
             ></pre>
     </section>
     <section>
-        <h3>{i()}. The Rest</h3>
+        <h2>{i()}. The Rest</h2>
         <p>
             We came quite far and to be honest, most of the hard work is already
             done with the multi-head attention block. But if we look at the
@@ -1160,7 +1160,7 @@ class Transformer(eqx.Module):
             ></pre>
     </section>
     <section>
-        <h3>{i()}. Training and Evaluation</h3>
+        <h2>{i()}. Training and Evaluation</h2>
         <p>
             Our transformer is done. It lacks a couple of improvements, such as
             dropout for example. But that's fine. This is more for learning

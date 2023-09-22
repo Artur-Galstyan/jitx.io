@@ -3,11 +3,22 @@
 @tailwind utilities;
 
 @layer components {
-    pre > code {
-        @apply text-white !important;
+    ul {
+        @apply list-disc;
     }
-}
+    p {
+        @apply text-justify my-2 leading-relaxed;
+    }
 
-p {
-    text-align: justify !important;
+    h1 {
+        @apply text-3xl font-bold my-4;
+    }
+
+    h2 {
+        @apply text-2xl font-bold my-4;
+    }
+
+    .katex {
+        @apply overflow-auto;
+    }
 }
