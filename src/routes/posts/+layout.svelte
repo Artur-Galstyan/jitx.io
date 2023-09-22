@@ -63,4 +63,4 @@
         <slot />
     </div>
 </main>
-<div class="h-[40rem]" />
+<div class="h-[10rem]" />

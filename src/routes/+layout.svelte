@@ -4,6 +4,7 @@
 
     import { dev } from "$app/environment";
     import { inject } from "@vercel/analytics";
+    import CommentSection from "$lib/components/CommentSection.svelte";
 
     inject({ mode: dev ? "development" : "production" });
 </script>
@@ -15,3 +16,5 @@
     <Navbar />
     <slot />
 </main>
+
+<CommentSection />

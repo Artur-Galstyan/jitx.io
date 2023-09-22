@@ -14,3 +14,7 @@ export function toggleModal(dialogId: string) {
         dialog.showModal();
     }
 }
+
+export function showLoginDialog() {
+    toggleModal("loginDialogModal");
+}

@@ -8,17 +8,32 @@ datasource db {
 }
 
 model Post {
-  id                   Int      @id @default(autoincrement())
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                   Int       @id @default(autoincrement())
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
   title                String
-  slug                 String   @unique
+  slug                 String    @unique
   tags                 String[]
   shortDescription     String?
   repositoryLink       String?
-  draft                Boolean? @default(true)
-  thumbnail            Boolean  @default(false)
+  draft                Boolean?  @default(true)
+  thumbnail            Boolean   @default(false)
   thumbnailDescription String?
+  Comment              Comment[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  body String
+
+  postId Int
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 }
 
 model Account {
@@ -56,6 +71,7 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  Comment       Comment[]
 }
 
 model VerificationToken {
