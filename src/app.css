@@ -4,7 +4,7 @@
 
 @layer components {
     ul {
-        @apply list-disc;
+        @apply list-disc w-3/4 mx-auto text-justify;
     }
     p {
         @apply text-justify my-2 leading-relaxed;

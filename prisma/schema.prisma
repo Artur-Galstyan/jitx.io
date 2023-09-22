@@ -8,15 +8,17 @@ datasource db {
 }
 
 model Post {
-  id               Int      @id @default(autoincrement())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  title            String
-  slug             String   @unique
-  tags             String[]
-  shortDescription String?
-  repositoryLink   String?
-  draft            Boolean? @default(true)
+  id                   Int      @id @default(autoincrement())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  title                String
+  slug                 String   @unique
+  tags                 String[]
+  shortDescription     String?
+  repositoryLink       String?
+  draft                Boolean? @default(true)
+  thumbnail            Boolean  @default(false)
+  thumbnailDescription String?
 }
 
 model Account {
