@@ -6,6 +6,7 @@
     import { page } from "$app/stores";
     import Icon from "svelte-icons-pack";
     import AiOutlineGithub from "svelte-icons-pack/ai/AiOutlineGithub";
+    import CommentSection from "$lib/components/CommentSection.svelte";
 
     hljs.registerLanguage("python", python);
     const post: Post = $page.data.post;
@@ -64,3 +65,5 @@
     </div>
 </main>
 <div class="h-[10rem]" />
+
+<CommentSection />

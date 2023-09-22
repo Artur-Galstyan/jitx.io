@@ -16,5 +16,3 @@
     <Navbar />
     <slot />
 </main>
-
-<CommentSection />

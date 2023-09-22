@@ -36,7 +36,7 @@
 </script>
 
 <div class="text-center text-info">Comment Section (WIP)</div>
-<div class="w-1/2 mx-auto border border-solid border-gray-600 p-8">
+<div class="w-full mx-auto border border-solid border-gray-600 p-8">
     {#if editor}
         <div class="">
             <div class="flex space-x-2 my-auto">
@@ -202,11 +202,7 @@
                 >
                     hr
                 </button>
-                <button
-                    on:click={() => editor.chain().focus().setHardBreak().run()}
-                >
-                    Line break
-                </button>
+
                 <button
                     on:click={() => editor.chain().focus().undo().run()}
                     disabled={!editor.can().chain().focus().undo().run()}
