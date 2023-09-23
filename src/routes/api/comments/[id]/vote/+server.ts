@@ -28,13 +28,29 @@ export const POST = (async ({ request, locals, params }) => {
     if (!comment) {
         return json({ error: "Comment not found", status: 404 });
     }
+    let reactionTypeFromJson = (await request.json()).reactionType;
 
+    if (reactionTypeFromJson === "up") {
+        reactionTypeFromJson = ReactionType.LIKE;
+    } else if (reactionTypeFromJson === "down") {
+        reactionTypeFromJson = ReactionType.DISLIKE;
+    } else if (reactionTypeFromJson === "heart") {
+        reactionTypeFromJson = ReactionType.HEART;
+    } else if (reactionTypeFromJson === "clap") {
+        reactionTypeFromJson = ReactionType.CLAP;
+    } else if (reactionTypeFromJson === "fire") {
+        reactionTypeFromJson = ReactionType.FIRE;
+    } else if (reactionTypeFromJson === "sad") {
+        reactionTypeFromJson = ReactionType.SAD;
+    } else if (reactionTypeFromJson === "party") {
+        reactionTypeFromJson = ReactionType.PARTY;
+    }
     // Check if user has already upvoted this comment
     const existingReaction = await prisma.reaction.findFirst({
         where: {
             commentId: commentId,
             userId: user.id,
-            type: ReactionType.LIKE
+            type: reactionTypeFromJson
         }
     });
 
@@ -54,7 +70,7 @@ export const POST = (async ({ request, locals, params }) => {
         data: {
             commentId: commentId,
             userId: user.id,
-            type: ReactionType.LIKE
+            type: reactionTypeFromJson
         }
     });
 

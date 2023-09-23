@@ -15,37 +15,37 @@
         {
             emoji: "👍",
             reactionType: ReactionType.LIKE,
-            vote: "upVote"
+            vote: "up"
         },
         {
             emoji: "👎",
             reactionType: ReactionType.DISLIKE,
-            vote: "downVote"
+            vote: "down"
         },
         {
             emoji: "🎉",
             reactionType: ReactionType.PARTY,
-            vote: "partyVote"
+            vote: "party"
         },
         {
             emoji: "👏",
             reactionType: ReactionType.CLAP,
-            vote: "clapVote"
+            vote: "clap"
         },
         {
             emoji: "❤️",
             reactionType: ReactionType.HEART,
-            vote: "heartVote"
+            vote: "heart"
         },
         {
             emoji: "🔥",
             reactionType: ReactionType.FIRE,
-            vote: "fireVote"
+            vote: "fire"
         },
         {
             emoji: "🙁",
             reactionType: ReactionType.SAD,
-            vote: "sadVote"
+            vote: "sad"
         }
     ];
 
@@ -53,21 +53,20 @@
         reaction: { emoji: string; reactionType: ReactionType; vote: string },
         commentId: string
     ) {
-        let req = await fetch(
-            "/api/comments/" + commentId + "/" + reaction.vote,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            }
-        );
+        let req = await fetch("/api/comments/" + commentId + "/vote", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                reactionType: reaction.vote
+            })
+        });
         let res = await req.json();
 
         if (res.error) {
             errorToast("Error", res.error);
         } else {
-            console.log(res);
             await invalidateAll();
             const elem = document.activeElement as HTMLElement;
             if (elem) {
@@ -150,10 +149,20 @@
                     <div>
                         {#each reactions as reaction}
                             {#if comment.Reactions.filter((r) => r.type === reaction.reactionType).length > 0}
-                                {comment.Reactions.filter(
-                                    (r) => r.type === reaction.reactionType
-                                ).length}
-                                {reaction.emoji}
+                                <button
+                                    on:click={async () => {
+                                        await submitReaction(
+                                            reaction,
+                                            comment.id
+                                        );
+                                    }}
+                                    class="btn btn-xs btn-outline mx-2"
+                                >
+                                    {comment.Reactions.filter(
+                                        (r) => r.type === reaction.reactionType
+                                    ).length}
+                                    {reaction.emoji}
+                                </button>
                             {/if}
                         {/each}
                     </div>

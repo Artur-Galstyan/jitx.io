@@ -14,6 +14,7 @@
     import { signOut } from "@auth/sveltekit/client";
     import { errorToast, successNotification } from "$lib/utils/notifications";
     import { PUBLIC_CAPTCHA_SITE_KEY } from "$env/static/public";
+    import { invalidateAll } from "$app/navigation";
     let element: HTMLDivElement;
     let editor: Editor;
 
@@ -75,7 +76,7 @@
             toggleModal("are-you-sure");
             successNotification("Success", "Comment posted!");
 
-            $page.data.comments = [res.comment, ...$page.data.comments];
+            await invalidateAll();
         }
     }
 </script>
