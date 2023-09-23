@@ -32,5 +32,12 @@
             Read
         </button>
     </div>
+    <div class="flex space-x-2 my-2">
+        {#each post.tags as tag}
+            <div class="badge badge-outline badge-sm">
+                {tag}
+            </div>
+        {/each}
+    </div>
     <div class="divider" />
 {/each}
