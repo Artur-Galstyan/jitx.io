@@ -1,5 +1,6 @@
 import { env } from "$env/dynamic/private";
 import { prisma } from "$lib/server/prisma.server";
+import { COMMENTS_PER_PAGE } from "$lib/utils/constants";
 import { json, type RequestHandler } from "@sveltejs/kit";
 
 export const POST = (async ({ request, locals, fetch }) => {
@@ -97,4 +98,36 @@ export const DELETE = (async ({ request, locals, fetch }) => {
     });
 
     return json({ deleted: true });
+}) satisfies RequestHandler;
+
+export const GET = (async ({ request, locals, fetch, url }) => {
+    const searchParams = url.searchParams;
+
+    const postId = searchParams.get("postId");
+    if (!postId) {
+        return json({ error: "Post ID must not be empty", status: 400 });
+    }
+
+    const page = searchParams.get("page");
+    if (!page) {
+        return json({ error: "Page must not be empty", status: 400 });
+    }
+
+    const skip = Math.ceil(COMMENTS_PER_PAGE * (Number(page) - 1));
+
+    const comments = await prisma.comment.findMany({
+        where: {
+            postId: postId
+        },
+        skip: skip,
+        take: COMMENTS_PER_PAGE,
+        orderBy: {
+            createdAt: "desc"
+        },
+        include: {
+            User: {},
+            Reactions: {}
+        }
+    });
+    return json({ comments: comments });
 }) satisfies RequestHandler;

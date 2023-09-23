@@ -1,4 +1,5 @@
 import { prisma } from "$lib/server/prisma.server";
+import { COMMENTS_PER_PAGE } from "$lib/utils/constants";
 import type { LayoutServerLoad } from "../$types";
 
 export const load = (async ({ request, locals, url }) => {
@@ -22,7 +23,7 @@ export const load = (async ({ request, locals, url }) => {
         where: {
             postId: post[0].id
         },
-        take: 10,
+        take: COMMENTS_PER_PAGE,
         orderBy: {
             createdAt: "desc"
         },
@@ -32,5 +33,9 @@ export const load = (async ({ request, locals, url }) => {
         }
     });
 
-    return { post: post[0], comments: comments };
+    const allComments = await prisma.comment.findMany({});
+
+    const totalPages = allComments.length / COMMENTS_PER_PAGE;
+
+    return { post: post[0], comments: comments, totalPages: totalPages };
 }) satisfies LayoutServerLoad;

@@ -9,8 +9,11 @@
     import Icon from "svelte-icons-pack";
 
     import { ReactionType } from "@prisma/client";
-    let commentToDelete: any = null;
+    import { COMMENTS_PER_PAGE } from "$lib/utils/constants";
 
+    let commentToDelete: any = null;
+    let moreComments: any[] = [];
+    let currentPage = 1;
     const reactions = [
         {
             emoji: "👍",
@@ -83,7 +86,7 @@
     <div class="text-center text-gray-400">No comments yet</div>
 {:else}
     <div class="">
-        {#each $page.data.comments as comment}
+        {#each $page.data.comments.concat(moreComments) as comment}
             <div
                 class="flex flex-col border border-solid border-gray-400 p-4 my-2"
             >
@@ -169,6 +172,31 @@
                 </div>
             </div>
         {/each}
+        {#if $page.data.comments.concat(moreComments).length < COMMENTS_PER_PAGE * $page.data.totalPages}
+            <div class="flex justify-center">
+                <button
+                    on:click={async () => {
+                        let loadedComments = await fetch(
+                            "/api/comments?postId=" +
+                                $page.data.post.id +
+                                "&page=" +
+                                (currentPage + 1)
+                        ).then((res) => res.json());
+                        loadedComments = loadedComments.comments;
+                        moreComments = [...moreComments, ...loadedComments];
+                        moreComments = moreComments.sort((a, b) =>
+                            a.createdAt > b.createdAt ? -1 : 1
+                        );
+                        if (loadedComments.length > 0) {
+                            currentPage++;
+                        }
+                    }}
+                    class="btn"
+                >
+                    Load more
+                </button>
+            </div>
+        {/if}
     </div>
 {/if}
 
