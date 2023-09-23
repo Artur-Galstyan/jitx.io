@@ -200,8 +200,12 @@
                 {/if}
             </div>
         </div>
+        <div class="divider" />
+    {:else}
+        <div class="flex justify-center">
+            <span class="loading loading-ball loading-sm" />
+        </div>
     {/if}
-    <div class="divider" />
     <div class="">
         <div class="prose" bind:this={element} />
     </div>
