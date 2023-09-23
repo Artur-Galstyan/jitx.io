@@ -79,8 +79,7 @@
     }
 </script>
 
-<div class="text-center text-info my-8">Comment Section (WIP)</div>
-
+<div class="divider" />
 <CommentSectionEditor />
 {#if $page.data.comments.length === 0}
     <div class="text-center text-gray-400">No comments yet</div>

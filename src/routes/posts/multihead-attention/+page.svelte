@@ -256,6 +256,31 @@ def dot_product_attention(query_projection: Array, key_projection: Array, value_
     />
     <p>
         To understand <i>self-attention</i>, we first need to understand
-        <i>"regular" attention</i>.
+        <i>"regular" attention</i>. Here's a useful example. Think of YouTube
+        and how you might want to find a particular video. You enter a
+        <b>query</b>
+        into the search bar. Now, how does YouTube know, which video to show you?
+        Each video has a video title, a description and some other metadata. Those
+        are the <b>keys</b>. Your query is matched against the keys and
+        whichever has the highest <b>value</b> (according to whatever metric was
+        using in the <i>matching-process</i>), is shown to you first.
     </p>
+    <Figure path="Attention1.drawio.svg" caption="Regular Attention" />
+    <p>
+        In that example, the query and keys are different. The query was what
+        you searched for and the keys whatever YouTube has in its database. In
+        self-attention on the other hand, the query and key are the same - at
+        least initially.
+    </p>
+    <p>
+        Take the input sentence: "Hi, how are". That sentence is both the query
+        and the key, albeit in its <i>raw form</i>. Matching those against each
+        other directly isn't really useful - not to mention that it's always the
+        same. We need to turn these raw query and keys into <b>usable</b>
+        queries and keys, such that you can actually match one against the other.
+        <i>How</i>
+        we can do that specifically is unknown. We can, however,
+        <b>learn it</b>. And that's precisely the goal of the linear layers.
+    </p>
+    <Figure path="Attention2.drawio.svg" caption="Self-Attention" />
 </div>
