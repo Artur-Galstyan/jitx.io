@@ -36,92 +36,89 @@
 
 <div class="text-justify mx-auto">
     <div class="divider" />
-    <section>
-        <p>
-            Multihead-Attention (MHA) is the key part of the transformer
-            architecture. It uses a mechanism called self attention, which has
-            been very successful in NLP tasks. I already introduced the
-            transformer in my other <a href="/posts/learning-the-transformer">
-                blog post</a
-            >. In this blog post, we will take a deepdive into the MHA and try
-            to make it as general as we can. Let's start with an overview of the
-            MHA block. In the following figure, you can see the structure of the
-            MHA block.
-        </p>
-        <Figure path={"MHA.drawio.svg"} caption="MHA Block" />
-        <p>
-            The input to the MHA block is duplicated into 3 vectors: the query,
-            key and value vectors. Each of those is first passed through their
-            respective linear layer. Each of those layers has a specific task:
-        </p>
-        <ul>
-            <li>
-                Query Layer: transforms the input to query vectors, i.e. what
-                you're interested in
-            </li>
-            <li>
-                Key Layer: transforms the input to a set of keys to match the
-                query vectors against
-            </li>
-            <li>
-                Value Layer: take the scaled combination of the query and key
-                projects and compute the output of the MHA block
-            </li>
-        </ul>
 
-        <p>This is a good starting point, so let's write this down in code.</p>
-        <HintBox
-            content={'(By the way, most of this was already covered in my <a class="link" href="/posts/learning-the-transformer"> previous blog post </a> and this implementation takes heavy inspiration from already existing implementations such as the <a class="link" href="https://github.com/patrick-kidger/equinox/blob/main/equinox/nn/_attention.py">MHA block from Equinox</a>)'}
-        />
-        <p>
-            One thing to note is the dimensionalities of the vectors, so let's
-            start by defining the dimensions first. Here's the notation for this
-            blog post:
-        </p>
-        <ul>
-            <li>
-                <Katex math={"L"} />: maximum sequence length
-            </li>
-            <li>
-                <Katex math={"h"} />: number of heads
-            </li>
-            <li>
-                <Katex math={"\\{q,k,v\\}_{emdb}"} />: query, key or value
-                embedding dimension
-            </li>
-        </ul>
-        <p>Furthermore, let's define the input to the MHA block.</p>
-        <ul>
-            <li>
-                Query: <Katex math={"[L \\times q_{in}]"} />, where <Katex
-                    math={"q_{in}"}
-                /> is the query input dimension
-            </li>
-            <li>
-                Key: <Katex math={"[L \\times k_{in}]"} />, where <Katex
-                    math={"k_{in}"}
-                /> is the key input dimension
-            </li>
-            <li>
-                Value <Katex math={"[L \\times v_{in}]"} />, where <Katex
-                    math={"v_{in}"}
-                /> is the value input dimension
-            </li>
-        </ul>
-        <p>
-            Usually, the query, key and value input dimensions are the same, but
-            we want our implementation to be very general and make as few
-            assumptions as possible about the current use case. Therefore, we
-            will be more specific. The reason that normally they are the same is
-            that, typically, they come out of the input embeddings (with the
-            positional embeddings added on top) and the same embedding is used
-            for all vectors, giving them all the same input dimension. Let's
-            start with some imports and define the dimensions.
-        </p>
-    </section>
-    <section>
-        <pre><code class="language-python"
-                >{`
+    <p>
+        Multihead-Attention (MHA) is the key part of the transformer
+        architecture. It uses a mechanism called self attention, which has been
+        very successful in NLP tasks. I already introduced the transformer in my
+        other <a href="/posts/learning-the-transformer"> blog post</a>. In this
+        blog post, we will take a deepdive into the MHA and try to make it as
+        general as we can. Let's start with an overview of the MHA block. In the
+        following figure, you can see the structure of the MHA block.
+    </p>
+    <Figure path={"MHA.drawio.svg"} caption="MHA Block" />
+    <p>
+        The input to the MHA block is duplicated into 3 vectors: the query, key
+        and value vectors. Each of those is first passed through their
+        respective linear layer. Each of those layers has a specific task:
+    </p>
+    <ul>
+        <li>
+            Query Layer: transforms the input to query vectors, i.e. what you're
+            interested in
+        </li>
+        <li>
+            Key Layer: transforms the input to a set of keys to match the query
+            vectors against
+        </li>
+        <li>
+            Value Layer: take the scaled combination of the query and key
+            projects and compute the output of the MHA block
+        </li>
+    </ul>
+
+    <p>This is a good starting point, so let's write this down in code.</p>
+    <HintBox
+        content={'(By the way, most of this was already covered in my <a class="link" href="/posts/learning-the-transformer"> previous blog post </a> and this implementation takes heavy inspiration from already existing implementations such as the <a class="link" href="https://github.com/patrick-kidger/equinox/blob/main/equinox/nn/_attention.py">MHA block from Equinox</a>)'}
+    />
+    <p>
+        One thing to note is the dimensionalities of the vectors, so let's start
+        by defining the dimensions first. Here's the notation for this blog
+        post:
+    </p>
+    <ul>
+        <li>
+            <Katex math={"L"} />: maximum sequence length
+        </li>
+        <li>
+            <Katex math={"h"} />: number of heads
+        </li>
+        <li>
+            <Katex math={"\\{q,k,v\\}_{emdb}"} />: query, key or value embedding
+            dimension
+        </li>
+    </ul>
+    <p>Furthermore, let's define the input to the MHA block.</p>
+    <ul>
+        <li>
+            Query: <Katex math={"[L \\times q_{in}]"} />, where <Katex
+                math={"q_{in}"}
+            /> is the query input dimension
+        </li>
+        <li>
+            Key: <Katex math={"[L \\times k_{in}]"} />, where <Katex
+                math={"k_{in}"}
+            /> is the key input dimension
+        </li>
+        <li>
+            Value <Katex math={"[L \\times v_{in}]"} />, where <Katex
+                math={"v_{in}"}
+            /> is the value input dimension
+        </li>
+    </ul>
+    <p>
+        Usually, the query, key and value input dimensions are the same, but we
+        want our implementation to be very general and make as few assumptions
+        as possible about the current use case. Therefore, we will be more
+        specific. The reason that normally they are the same is that, typically,
+        they come out of the input embeddings (with the positional embeddings
+        added on top) and the same embedding is used for all vectors, giving
+        them all the same input dimension. Let's start with some imports and
+        define the dimensions.
+    </p>
+
+    <pre><code class="language-python"
+            >{`
 import jax
 import jax.numpy as jnp
 import equinox as eqx
@@ -139,13 +136,13 @@ max_seq_len = 10
 batch_size = 2
 key = jax.random.PRNGKey(42)
 `}</code
-            ></pre>
-        <p>
-            As shown in the MHA figure, we will first implement the linear layer
-            parts.
-        </p>
-        <pre><code class="language-python"
-                >{`
+        ></pre>
+    <p>
+        As shown in the MHA figure, we will first implement the linear layer
+        parts.
+    </p>
+    <pre><code class="language-python"
+            >{`
 # Version 1
 class MultiheadAttention(eqx.Module):
     query_projection: eqx.nn.Linear
@@ -192,33 +189,73 @@ mha = MultiheadAttention(query_embedding_dim, key_embedding_dim, value_embedding
 x = jax.random.normal(subkey, (max_seq_len, query_input_dim))
 mha(x)
 `}</code
-            ></pre>
-        <pre><code class="language-text"
-                >{`
+        ></pre>
+    <pre><code class="language-text"
+            >{`
 query.shape=(10, 4, 32) # L x h x q_embd
 key.shape=(10, 4, 32) # L x h x k_emdb
 value.shape=(10, 4, 32) # L x h x v_emdb
             `}</code
-            ></pre>
-        <p>
-            As mentioned in my previous blog post, a MHA block consists of
-            multiple heads. But, instead of looping over each head, one at a
-            time, we can instead simply enlarge the query, key and value layers
-            to include all of the heads. Look at it this way: taking all of the
-            heads into consideration, the output shape of, say, the query
-            projection should be:
-            <Katex math={"[L \\times h \\times q_{embd}]"} displayMode />
+        ></pre>
+    <p>
+        As mentioned in my previous blog post, a MHA block consists of multiple
+        heads. But, instead of looping over each head, one at a time, we can
+        instead simply enlarge the query, key and value layers to include all of
+        the heads. Look at it this way: taking all of the heads into
+        consideration, the output shape of, say, the query projection should be:
+        <Katex math={"[L \\times h \\times q_{embd}]"} displayMode />
 
-            By making the query projection layer project from <Katex
-                math={"q_{in}"}
-            /> to <Katex math={"h * q_{emdb}"} />, we get initially a matrix
-            with the same <Katex math={"[L \\times h * q_{embd}]"} />. From
-            there, we can simply reshape that matrix into our desired shape: <Katex
-                math={"[L \\times h \\times q_{embd}]"}
-            />. This is just the first steps for the query and key projections;
-            they have still quite the journey ahead. We still need to matrix
-            multiply, scale (sometimes mask) and softmax them. Let's write a
-            function that can do all of that in one go.
-        </p>
-    </section>
+        By making the query projection layer project from <Katex
+            math={"q_{in}"}
+        /> to <Katex math={"h * q_{emdb}"} />, we get initially a matrix with
+        the same <Katex math={"[L \\times h * q_{embd}]"} />. From there, we can
+        simply reshape that matrix into our desired shape: <Katex
+            math={"[L \\times h \\times q_{embd}]"}
+        />. This is just the first steps for the query and key projections; they
+        have still quite the journey ahead. We still need to matrix multiply,
+        scale (sometimes mask) and softmax them. Let's write a function that can
+        do all of that in one go.
+    </p>
+    <pre><code class="language-python"
+            >{`
+def dot_product_attention(query_projection: Array, key_projection: Array, value_projection: Array, mask: Optional[Array | None]) -> Array:
+    qk_projection = jax.vmap(
+        lambda q, k: q @ k.T,
+        in_axes=(1, 1),
+        out_axes=1
+    )(query_projection, key_projection)
+    qk_projection = qk_projection / jnp.sqrt(key_projection.shape[-1])
+    qk_projection = jax.nn.softmax(qk_projection)
+
+    return qk_projection
+`}</code
+        ></pre>
+    <p>
+        Masking is missing from the above implementation for now, but that's ok.
+        We will add that in later.
+    </p>
+    <p>
+        Let's think for a moment what we even did in the function above and what
+        our goal even was. First, we took the query and the key projections,
+        i.e. the matrices that came <b>after</b> plugging our initial input through
+        the linear layers. The task of the linear layers is to learn how to transform
+        the input into usable queries and keys, such that they can be matched against
+        each other.
+    </p>
+    <p>
+        Let's just imagine for a moment that our linear layers do a <b
+            >perfect job</b
+        > of transforming the input into the perfect queries and keys. What do we
+        even do with those? This is where the self-attention mechanism comes into
+        play.
+    </p>
+    <HintBox
+        content={`If you've read my <a class="link" href=\"/posts/learning-the-transformer"
+    >previous post</a
+> you can skip the following explanation.`}
+    />
+    <p>
+        To understand <i>self-attention</i>, we first need to understand
+        <i>"regular" attention</i>.
+    </p>
 </div>
