@@ -67,3 +67,5 @@
 <div class="h-[10rem]" />
 
 <CommentSection />
+
+<div class="h-[10rem]" />

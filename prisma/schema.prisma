@@ -7,8 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ReactionType {
+  LIKE
+  DISLIKE
+  PARTY
+  CLAP
+  HEART
+  FIRE
+  SAD
+}
+
 model Post {
-  id                   Int       @id @default(autoincrement())
+  id                   String    @id @default(cuid())
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   title                String
@@ -16,24 +26,59 @@ model Post {
   tags                 String[]
   shortDescription     String?
   repositoryLink       String?
-  draft                Boolean?  @default(true)
+  draft                Boolean   @default(true)
   thumbnail            Boolean   @default(false)
   thumbnailDescription String?
   Comment              Comment[]
 }
 
 model Comment {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   body String
 
-  postId Int
-  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
 
   User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
+
+  // thumbsUpCount   Int @default(0)
+  // thumbsDownCount Int @default(0)
+  // partyCount      Int @default(0)
+  // clapCount       Int @default(0)
+  // heartCount      Int @default(0)
+  // fireCount       Int @default(0)
+  // sadCount        Int @default(0)
+
+  Reactions Reaction[]
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  type ReactionType
+
+  User      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  Comment   Comment @relation(fields: [commentId], references: [id])
+  commentId String
+}
+
+model User {
+  id            String     @id @default(cuid())
+  name          String?
+  email         String?    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  Comments      Comment[]
+  Reactions     Reaction[]
 }
 
 model Account {
@@ -61,17 +106,6 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  Comment       Comment[]
 }
 
 model VerificationToken {

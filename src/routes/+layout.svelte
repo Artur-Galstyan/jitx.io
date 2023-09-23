@@ -4,15 +4,23 @@
 
     import { dev } from "$app/environment";
     import { inject } from "@vercel/analytics";
-    import CommentSection from "$lib/components/CommentSection.svelte";
+    import { currentUser } from "$lib/state/currentUser";
+    import { page } from "$app/stores";
+    import LoginDialog from "$lib/components/LoginDialog.svelte";
+    import { PUBLIC_CAPTCHA_SITE_KEY } from "$env/static/public";
 
     inject({ mode: dev ? "development" : "production" });
+
+    $currentUser = $page.data.session?.user;
 </script>
 
 <svelte:head>
     <title>JITx</title>
+    <script src="https://www.google.com/recaptcha/api.js"></script>
 </svelte:head>
 <main class="w-[90%] md:w-1/2 mx-auto">
     <Navbar />
     <slot />
 </main>
+
+<LoginDialog />
