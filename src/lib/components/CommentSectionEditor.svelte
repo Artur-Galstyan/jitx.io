@@ -81,6 +81,36 @@
     }
 </script>
 
+{#if $currentUser}
+    <div class="flex flex-col md:flex-row md:space-x-2">
+        <button
+            on:click={() => {
+                toggleModal("are-you-sure");
+            }}
+            class="btn btn-primary btn-sm my-1 md:my-0"
+        >
+            Submit
+        </button>
+
+        <button
+            on:click={() => {
+                currentUser.set(undefined);
+                signOut();
+            }}
+            class="btn btn-outline btn-xs my-auto">Sign Out</button
+        >
+    </div>
+{:else}
+    <button
+        on:click={() => {
+            showLoginDialog();
+        }}
+        class="btn btn-primary btn-outline btn-xs"
+    >
+        Login to comment
+    </button>
+{/if}
+<div class="my-2" />
 <div class="w-full mx-auto border border-solid border-gray-400 p-4">
     {#if editor}
         <div class="">
@@ -167,37 +197,6 @@
                     hr
                 </button>
                 <div class="flex-1" />
-
-                {#if $currentUser}
-                    <div class="flex flex-col md:flex-row md:space-x-2">
-                        <button
-                            on:click={() => {
-                                toggleModal("are-you-sure");
-                            }}
-                            class="btn btn-primary btn-sm my-1 md:my-0"
-                        >
-                            Submit
-                        </button>
-
-                        <button
-                            on:click={() => {
-                                currentUser.set(undefined);
-                                signOut();
-                            }}
-                            class="btn btn-outline btn-xs my-auto"
-                            >Sign Out</button
-                        >
-                    </div>
-                {:else}
-                    <button
-                        on:click={() => {
-                            showLoginDialog();
-                        }}
-                        class="btn btn-primary btn-outline btn-sm"
-                    >
-                        Login to comment
-                    </button>
-                {/if}
             </div>
         </div>
         <div class="divider" />

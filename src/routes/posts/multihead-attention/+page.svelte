@@ -219,15 +219,15 @@ value.shape=(10, 4, 32) # L x h x v_emdb
     <pre><code class="language-python"
             >{`
 def dot_product_attention(query_projection: Array, key_projection: Array, value_projection: Array, mask: Optional[Array | None]) -> Array:
-    qk_projection = jax.vmap(
+    attention_weights = jax.vmap(
         lambda q, k: q @ k.T,
         in_axes=(1, 1),
         out_axes=1
     )(query_projection, key_projection)
-    qk_projection = qk_projection / jnp.sqrt(key_projection.shape[-1])
-    qk_projection = jax.nn.softmax(qk_projection)
+    attention_weights = attention_weights / jnp.sqrt(key_projection.shape[-1])
+    attention_weights = jax.nn.softmax(attention_weights, axis=-1)
 
-    return qk_projection
+    return attention_weights
 `}</code
         ></pre>
     <p>
@@ -283,4 +283,137 @@ def dot_product_attention(query_projection: Array, key_projection: Array, value_
         <b>learn it</b>. And that's precisely the goal of the linear layers.
     </p>
     <Figure path="Attention2.drawio.svg" caption="Self-Attention" />
+    <p>
+        Alright, let's continue with the MHA block, while keeping in mind, that
+        we will add masking <b>last</b>. In our image we see that the next step
+        is the matrix multiplication of the scaled attention weights with the
+        value matrix.
+    </p>
+    <pre><code class="language-python"
+            >{`
+class MultiheadAttention(eqx.Module):
+    ...
+    def __call__(self, x: Float[Array, "max_seq_len input_dim"]):
+        seq_len, _ = x.shape
+        query = jax.vmap(self.query_projection)(x).reshape(seq_len, self.num_heads, self.query_embedding_dim)
+        key = jax.vmap(self.key_projection)(x).reshape(seq_len, self.num_heads, self.key_embedding_dim) 
+        value = jax.vmap(self.value_projection)(x).reshape(seq_len, self.num_heads, self.value_embedding_dim)
+
+        scaled_attention_weights = dot_product_attention(query, key, value, None)
+        
+        qkv_matmul = jax.vmap(
+            lambda attention_weights, value: attention_weights @ value,
+            in_axes=(1, 1),
+            out_axes=1
+        )(scaled_attention_weights, value)
+`}</code
+        ></pre>
+    <p>
+        As you can see, we compute the matrix multiplication between the
+        attention weights and the value. We use <code>jax.vmap</code> to map over
+        axis 1 of the inputs. Just as a reminder, the shape of the attention weights
+        and the values are:
+    </p>
+    <Katex math={"L \\times h \\times L"} displayMode />
+    <Katex math={"L \\times h \\times v_{embd},"} displayMode />
+    <p>
+        where the first is the shape of the attention weight matrix and the
+        latter is the shape of the value projection and <Katex math={"h"} /> is the
+        number of heads. Why is the shape of the attention weights <Katex
+            math={"L \\times h \\times L"}
+        />? We mentioned earlier how in self-attention the query and the key are
+        both the input (that went through the linear layers, but from now on,
+        whenever I reference the query and keys you can assume that I'm
+        referring to the ones <b>after</b> having their linear layers applied to
+        them). When we compute the how much attention each word gives to another
+        word in the sequence, then it only makes sense that we have a square
+        matrix! If your query has 3 words, then you have 3 keys; matching each
+        query with each key gives you a 3x3 matrix. From there, we have to
+        remind ourselves, that we have a <i>multihead attention</i> block, which
+        means that each head - <b>individually and independently</b> - computes the
+        attention weights. Since we want to use matrices to leverage efficient GPU
+        usage, we keep everything in a tensor and simply add the head dimension in
+        the middle. It's in the middle simply for consistency, as we chose the middle
+        dimension (i.e. axis 1) to be the number of heads.
+    </p>
+    <p>
+        By defining <code>jax.vmap(..., in_axes=(1, 1), out_axes=1)</code> we
+        tell Jax to vectorise across axes (1, 1) for the input (which is <Katex
+            math={"h"}
+        />) and then we define <code>out_axes=1</code>, which puts that axes
+        back into the output in axis position 1. The following figure
+        illustrates this.
+    </p>
+    <div class="w-3/4 mx-auto">
+        <Figure path="VMAP-MHA.drawio.svg" caption="VMAP Example" />
+    </div>
+    <p>
+        Now, we need to concatenate the heads and then apply the final linear
+        output layer. We're still missing the output layer in our MHA
+        implementation, so first let's define the output's dimension:
+    </p>
+    <pre><code class="language-python"
+            >{`
+output_dim = 32
+`}</code
+        ></pre>
+    <p>
+        And let's add the output to our current implementation, both in the <code
+            >__init__</code
+        >
+        and the <code>__call__</code> functions.
+    </p>
+    <pre><code class="language-python"
+            >{`
+class MultiheadAttention(eqx.Module):
+    ...
+    output: eqx.nn.Linear
+    output_dim: int = eqx.field(static=True)
+
+    def __init__(self, query_embedding_dim, key_embedding_dim, value_embedding_dim, query_input_dim, key_input_dim, value_input_dim, num_heads, output_dim, key):
+        qkey, kkey, vkey, okey = jax.random.split(key, 4)
+        ...
+        self.output = eqx.nn.Linear(num_heads * value_embedding_dim, output_dim, key=okey, use_bias=False)
+        
+        # parameters
+        ...
+        self.output_dim = output_dim
+
+    def __call__(self, x: Float[Array, "max_seq_len input_dim"]):
+        ...
+        concatenation = qkv_matmul.reshape(seq_len, -1)
+        ...
+        output = jax.vmap(self.output)(concatenation)
+        return output
+
+key, subkey = jax.random.split(key)
+mha = MultiheadAttention(query_embedding_dim, key_embedding_dim, value_embedding_dim, query_input_dim, key_input_dim, value_input_dim, num_heads, output_dim, key)
+x = jax.random.normal(subkey, (max_seq_len, query_input_dim))
+output = mha(x)
+`}</code
+        ></pre>
+    <pre><code class="language-text"
+            >{`
+ic| query.shape: (10, 4, 32)
+
+ic| key.shape: (10, 4, 32)
+ic| value.shape: (10, 4, 32)
+ic| attention_weights.shape: (10, 4, 10)
+ic| qkv_matmul.shape: (10, 4, 32)
+ic| concatenation.shape: (10, 128)
+ic| output.shape: (10, 32)
+`}</code
+        ></pre>
+    <HintBox
+        content={`I'm using the <a class="link" href="https://github.com/gruns/icecream">icecream package</a> for logging, which I've found to be very useful.`}
+    />
+    <p>
+        As you can see, the output shape is <Katex
+            math={"L \\times q_{embd}"}
+        />, but it needn't necessarily be; it's just usually the case.
+    </p>
+    <p>
+        Our implementation is already ok-ish flexible, but we can go one step
+        further, namely by looking at the <b>number of heads</b>!
+    </p>
 </div>
