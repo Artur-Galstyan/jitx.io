@@ -17,6 +17,12 @@ enum ReactionType {
   SAD
 }
 
+enum Status {
+  DRAFT
+  PLANNED
+  PUBLISHED
+}
+
 model Post {
   id                   String    @id @default(cuid())
   createdAt            DateTime  @default(now())
@@ -26,7 +32,7 @@ model Post {
   tags                 String[]
   shortDescription     String?
   repositoryLink       String?
-  draft                Boolean   @default(true)
+  status               Status    @default(DRAFT)
   thumbnail            Boolean   @default(false)
   thumbnailDescription String?
   Comment              Comment[]
