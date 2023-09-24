@@ -8,7 +8,6 @@
     import VscSmiley from "svelte-icons-pack/vsc/VscSmiley";
     import Icon from "svelte-icons-pack";
 
-    import { ReactionType } from "@prisma/client";
     import { COMMENTS_PER_PAGE } from "$lib/utils/constants";
 
     let commentToDelete: any = null;
@@ -17,43 +16,36 @@
     const reactions = [
         {
             emoji: "👍",
-            reactionType: ReactionType.LIKE,
-            vote: "up"
+            vote: "LIKE"
         },
         {
             emoji: "👎",
-            reactionType: ReactionType.DISLIKE,
-            vote: "down"
+            vote: "DISLIKE"
         },
         {
             emoji: "🎉",
-            reactionType: ReactionType.PARTY,
-            vote: "party"
+            vote: "PARTY"
         },
         {
             emoji: "👏",
-            reactionType: ReactionType.CLAP,
-            vote: "clap"
+            vote: "CLAP"
         },
         {
             emoji: "❤️",
-            reactionType: ReactionType.HEART,
-            vote: "heart"
+            vote: "HEART"
         },
         {
             emoji: "🔥",
-            reactionType: ReactionType.FIRE,
-            vote: "fire"
+            vote: "FIRE"
         },
         {
             emoji: "🙁",
-            reactionType: ReactionType.SAD,
-            vote: "sad"
+            vote: "SAD"
         }
     ];
 
     async function submitReaction(
-        reaction: { emoji: string; reactionType: ReactionType; vote: string },
+        reaction: { emoji: string; vote: string },
         commentId: string
     ) {
         let req = await fetch("/api/comments/" + commentId + "/vote", {
@@ -150,7 +142,7 @@
                     </div>
                     <div>
                         {#each reactions as reaction}
-                            {#if comment.Reactions.filter((r) => r.type === reaction.reactionType).length > 0}
+                            {#if comment.Reactions.filter((r) => r.type === reaction.vote).length > 0}
                                 <button
                                     on:click={async () => {
                                         await submitReaction(
@@ -161,7 +153,7 @@
                                     class="btn btn-xs btn-outline mx-2"
                                 >
                                     {comment.Reactions.filter(
-                                        (r) => r.type === reaction.reactionType
+                                        (r) => r.type === reaction.vote
                                     ).length}
                                     {reaction.emoji}
                                 </button>

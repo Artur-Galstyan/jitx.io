@@ -5,12 +5,18 @@ import { json, type RequestHandler } from "@sveltejs/kit";
 export const POST = (async ({ request, locals, params }) => {
     const session = await locals.getSession();
     if (!session) {
-        return json({ error: "You must be logged in to comment", status: 401 });
+        return json({
+            error: "You must be logged in to make a reaction!",
+            status: 401
+        });
     }
 
     const user = session.user;
     if (!user) {
-        return json({ error: "You must be logged in to comment", status: 401 });
+        return json({
+            error: "You must be logged in to make a reaction!",
+            status: 401
+        });
     }
 
     const commentId = params.id;
@@ -30,19 +36,19 @@ export const POST = (async ({ request, locals, params }) => {
     }
     let reactionTypeFromJson = (await request.json()).reactionType;
 
-    if (reactionTypeFromJson === "up") {
+    if (reactionTypeFromJson === "LIKE") {
         reactionTypeFromJson = ReactionType.LIKE;
-    } else if (reactionTypeFromJson === "down") {
+    } else if (reactionTypeFromJson === "DISLIKE") {
         reactionTypeFromJson = ReactionType.DISLIKE;
-    } else if (reactionTypeFromJson === "heart") {
+    } else if (reactionTypeFromJson === "HEART") {
         reactionTypeFromJson = ReactionType.HEART;
-    } else if (reactionTypeFromJson === "clap") {
+    } else if (reactionTypeFromJson === "CLAP") {
         reactionTypeFromJson = ReactionType.CLAP;
-    } else if (reactionTypeFromJson === "fire") {
+    } else if (reactionTypeFromJson === "FIRE") {
         reactionTypeFromJson = ReactionType.FIRE;
-    } else if (reactionTypeFromJson === "sad") {
+    } else if (reactionTypeFromJson === "SAD") {
         reactionTypeFromJson = ReactionType.SAD;
-    } else if (reactionTypeFromJson === "party") {
+    } else if (reactionTypeFromJson === "PARTY") {
         reactionTypeFromJson = ReactionType.PARTY;
     }
     // Check if user has already upvoted this comment
