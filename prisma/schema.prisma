@@ -65,7 +65,7 @@ model Reaction {
 
   User      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  Comment   Comment @relation(fields: [commentId], references: [id])
+  Comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
   commentId String
 }
 
