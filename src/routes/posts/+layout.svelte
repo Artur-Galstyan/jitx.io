@@ -1,5 +1,6 @@
 <script lang="ts">
     import python from "highlight.js/lib/languages/python";
+    import c from "highlight.js/lib/languages/c";
     import hljs from "highlight.js";
     import { onMount } from "svelte";
     import type { Post } from "@prisma/client";
@@ -9,6 +10,7 @@
     import CommentSection from "$lib/components/CommentSection.svelte";
 
     hljs.registerLanguage("python", python);
+    hljs.registerLanguage("c", c);
     const post: Post = $page.data.post;
 
     onMount(() => {

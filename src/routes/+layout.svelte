@@ -7,7 +7,6 @@
     import { currentUser } from "$lib/state/currentUser";
     import { page } from "$app/stores";
     import LoginDialog from "$lib/components/LoginDialog.svelte";
-    import { PUBLIC_CAPTCHA_SITE_KEY } from "$env/static/public";
 
     inject({ mode: dev ? "development" : "production" });
 

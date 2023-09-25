@@ -3,11 +3,11 @@
     import { page } from "$app/stores";
 </script>
 
-<div class="text-center text-lg font-bold">
+<div class="text-center text-lg font-bold my-4">
     ⚠️ This page is still under construction! ⚠️
 </div>
 
-<div class="font-extrabold text-lg">Posts</div>
+<div class="font-extrabold text-lg my-4">Blog Posts</div>
 {#each $page.data.posts as post}
     <div class="flex flex-col md:flex-row md:space-x-2">
         <div class="md:w-[30%] flex space-x-4">
