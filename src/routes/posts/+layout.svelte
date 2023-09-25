@@ -16,12 +16,39 @@
     onMount(() => {
         hljs.highlightAll();
     });
+
+    const getStaticFile = (path: string) => {
+        return `${$page.url.pathname}/${path}`;
+    };
 </script>
 
 <svelte:head>
     <title>
         {post.title}
     </title>
+    <meta name="description" content={post.shortDescription} />
+    <meta name="keywords" content={post.tags.join(", ")} />
+    <meta name="author" content="Artur A. Galstyan" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content={post.title} />
+    <meta property="og:description" content={post.shortDescription} />
+    <meta property="og:image" content={getStaticFile("thumbnail.webp")} />
+    <meta property="og:url" content={$page.url.pathname} />
+
+    <!-- Facebook Meta Tags -->
+    <meta property="og:url" content={$page.url.pathname} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="One Week of C" />
+    <meta property="og:description" content={post.shortDescription} />
+    <meta property="og:image" content={getStaticFile("thumbnail.webp")} />
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="twitter:domain" content="jitx.io" />
+    <meta property="twitter:url" content={$page.url.pathname} />
+    <meta name="twitter:title" content="One Week of C" />
+    <meta name="twitter:description" content={post.shortDescription} />
+    <meta name="twitter:image" content={getStaticFile("thumbnail.webp")} />
 </svelte:head>
 <main class="flex justify-center">
     <div class="w-[95%] md:w-[90%] mx-auto">
