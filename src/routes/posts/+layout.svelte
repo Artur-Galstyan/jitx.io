@@ -16,7 +16,11 @@
     });
 </script>
 
-<svelte:head />
+<svelte:head>
+    <title>
+        {post.title}
+    </title>
+</svelte:head>
 <main class="flex justify-center">
     <div class="w-[95%] md:w-[90%] mx-auto">
         <h1 class="text-center font-extrabold py-0 my-0">
@@ -61,7 +65,10 @@
                 </button>
             </div>
         {/if}
-        <slot />
+        <div class="text-justify mx-auto">
+            <div class="divider" />
+            <slot />
+        </div>
     </div>
 </main>
 <div class="h-[10rem]" />
