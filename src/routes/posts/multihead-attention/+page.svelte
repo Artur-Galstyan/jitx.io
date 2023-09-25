@@ -414,6 +414,39 @@ ic| output.shape: (10, 32)
     </p>
     <p>
         Our implementation is already ok-ish flexible, but we can go one step
-        further, namely by looking at the <b>number of heads</b>!
+        further, namely by looking at the <b>number of heads</b>! So far, we
+        just assumed that each head should have 1 query, key and value, but this
+        need not be the case! In fact, there is something called
+        <a class="link" href="https://arxiv.org/abs/1911.02150"
+            >Multi-Query Attention (MQA)</a
+        >, where <b>one</b> key and value matrix is shared across all heads.
+        Personally, I would have gone with the name
+        <i>Single-Key-Value Attention (SKVA)</i> just to highlight that it's the
+        keys and the values that change.
+    </p>
+    <p>
+        Let's review. Our current implementation (the standard MHA block) has <Katex
+            math={"h"}
+        /> heads and each head has a query, key and value. This means in MHA, we
+        have <Katex math={"h"} /> queries, keys and values. In SKVA (i.e. MQA) we
+        have <Katex math={"h"} /> heads and <Katex math={"h"} /> queries but only
+        1 key and value. So, let's go one step further and define
+        <i>Multi-Key-Value Attention (MKVA)</i>, where we will have <Katex
+            math={"h"}
+        /> heads, <Katex math={"h"} /> queries and
+        <Katex math={"d"} /> keys and values.
+    </p>
+    <HintBox
+        content={`In this case, MHA would have <code>d = h</code> and in SKVA (MQA) we would have <code>d = 1</code>.`}
+    />
+    <p>Here's the difference between SKVA (MQA) and MHA:</p>
+    <div class="flex space-x-4">
+        <Figure path="StandardMHA.drawio.svg" caption="Standard MHA" />
+        <div class="divider divider-horizontal" />
+        <Figure path="SKVA.drawio.svg" caption="SKVA (MQA)" />
+    </div>
+    <p>
+        As you can see, <code>key 1</code> and <code>value 1</code> are shared across
+        all heads. Now, let's think for a moment what MKVA would look like.
     </p>
 </div>
