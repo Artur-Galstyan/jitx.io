@@ -409,5 +409,16 @@ ic| output.shape: (10, 32)
 </div>
 <p>
     As you can see, <code>key 1</code> and <code>value 1</code> are shared across
-    all heads. Now, let's think for a moment what MKVA would look like.
+    all heads. Now, let's think for a moment what MKVA would look like. Here's a
+    first draft:
+</p>
+<Figure path="MKVA.drawio.svg" caption="MKVA First Draft" />
+<HintBox
+    content={"We're treading into untapped waters here. Implementations from the big players such as PyTorch or TensorFlow aren't as customisable, which means I couldn't find a reference implementation."}
+/>
+<p>
+    Let's start simple and give these dimensions a name: <code
+        >key_multihead_dim</code
+    >, <code>value_multihead_dim</code> and <code>query_multihead_dim</code>,
+    although I'm not sure if we will even need last one at all.
 </p>

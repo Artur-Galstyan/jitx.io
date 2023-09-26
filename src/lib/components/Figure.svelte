@@ -9,6 +9,12 @@
 </script>
 
 <figure class="flex flex-col space-y-4">
-    <img src={getStaticFile(path)} alt="Example" class="h-full" />
+    <img
+        src={getStaticFile(path)}
+        alt="Example"
+        class="h-full mx-auto"
+        width="400"
+        height="400"
+    />
     <div class="text-sm text-gray-400 text-center">{caption}</div>
 </figure>
