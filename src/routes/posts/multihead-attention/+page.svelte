@@ -39,7 +39,7 @@
 
 <p>This is a good starting point, so let's write this down in code.</p>
 <HintBox
-    content={'(By the way, most of this was already covered in my <a class="link" href="/posts/learning-the-transformer"> previous blog post </a> and this implementation takes heavy inspiration from already existing implementations such as the <a class="link" href="https://github.com/patrick-kidger/equinox/blob/main/equinox/nn/_attention.py">MHA block from Equinox</a>)'}
+    content={'By the way, most of this was already covered in my <a class="link" href="/posts/learning-the-transformer"> previous blog post </a> and this implementation takes heavy inspiration from already existing implementations, especially from the <a class="link" href="https://github.com/patrick-kidger/equinox/blob/main/equinox/nn/_attention.py">MHA block from Equinox</a>. In fact, by the end of this blog post, we will arrive at the present implementation from the MHA used in Equinox with some useful extras (hopefully)'}
 />
 <p>
     One thing to note is the dimensionalities of the vectors, so let's start by
@@ -420,5 +420,50 @@ ic| output.shape: (10, 32)
     Let's start simple and give these dimensions a name: <code
         >key_multihead_dim</code
     >, <code>value_multihead_dim</code> and <code>query_multihead_dim</code>,
-    although I'm not sure if we will even need last one at all.
+    although I'm not sure if we will even need last one at all. Also, it might
+    very well be that what I'm trying to do here is not even possible, but let's
+    try it anyway. First, let's add these dimensions to the
+    <code>__init__</code> method.
+</p>
+<pre><code class="language-python"
+        >{`
+...
+key_multihead_dim = 4
+value_multihead_dim = 4
+query_multihead_dim = 4
+...
+
+class MultiheadAttention(eqx.Module):
+    query_multihead_dim: int = eqx.field(static=True)
+    key_multihead_dim: int = eqx.field(static=True)
+    value_multihead_dim: int = eqx.field(static=True)
+
+    def __init__(self, ..., query_multihead_dim, key_multihead_dim, value_multihead_dim, key):
+        ...
+        # parameters
+        ...   
+        self.query_multihead_dim = query_multihead_dim
+        self.key_multihead_dim = key_multihead_dim
+        self.value_multihead_dim = value_multihead_dim
+`}</code
+    ></pre>
+
+<p>
+    We need to come up with a solid plan of attack for our generic
+    implementation; most importantly, we need to figure out <i
+        >what we actually want to achieve</i
+    >, which is harder to articulate than you might think. Basically, if you set
+    e.g. <code>key_multihead_dim</code> to any number lower than the number of
+    heads, it effectively means that not all heads will have a key. For example,
+    if your MHA block has 8 heads and only a single shared key, i.e.
+    <code>key_multihead_dim = 1</code>, then all heads "share" that one key
+    (SKVA/MQA). But if you set it to, say, <code>key_multihead_dim=7</code>,
+    then 7 heads have a key and one does not. But in matrix multiplication you
+    can't simply "skip" a dimension, which is going to be our main challenge.
+</p>
+
+<p>
+    The current plan of attack is to use a double <code>vmap</code> strategy,
+    which I call the <i>outer</i> and <i>inner</i> <code>vmap</code>. The
+    following figure shows a rough outline of my strategy.
 </p>
