@@ -467,3 +467,68 @@ class MultiheadAttention(eqx.Module):
     which I call the <i>outer</i> and <i>inner</i> <code>vmap</code>. The
     following figure shows a rough outline of my strategy.
 </p>
+<Figure
+    width={600}
+    height={600}
+    path="MKVANew.drawio.svg"
+    caption="Outline of the Double VMAP Strategy"
+/>
+<p>
+    The rough idea is to have kind-of a nested for-loop. The outer <code
+        >vmap</code
+    >
+    maps over axis 1 of the queries (i.e. the number of heads - usually) while the
+    inner <code>vmap</code> maps over the key and value
+    <code>multihead_dim</code>. Upon closer inspection it would probably make
+    more sense to have a single value for the <code>multihead_dim</code>, since
+    - at the very least - the key and value dimensions must be the same
+    (otherwise, we'd need a third <code>vmap</code> for
+    <code>value_multihead_dim</code>). Actually, let's do that right now.
+</p>
+<pre><code class="language-python"
+        >{`...
+kv_multihead_dim = 4
+...
+
+class MultiheadAttention(eqx.Module):
+    ...
+    kv_multihead_dim: int = eqx.field(static=True)
+    ...
+    def __init__(self, ..., query_multihead_dim, kv_multihead_dim, key):
+        ...        
+        # parameters
+        ...
+        self.query_multihead_dim = query_multihead_dim
+        self.kv_multihead_dim = kv_multihead_dim
+
+    def __call__(self, x: Float[Array, "max_seq_len input_dim"]):
+        ...
+
+...
+mha = MultiheadAttention(..., query_embedding_dim, kv_multihead_dim, key)
+...
+`}</code
+    ></pre>
+<p>
+    After performing the MKVA, the out_axis is placed (per default) on <code
+        >out_axes=0</code
+    >
+    and we'd perform a summation over that <code>out_axes</code> and then
+    compute the mean over the <code>out_axes</code>.
+</p>
+<p>
+    Doing it this way, is actually <b>not</b> 100% mathematically equivalent to
+    what we had before! As it turns out, these <code>vmap</code>s are not
+    exactly the same:
+</p>
+<pre><code class="language-python"
+        >{`
+vmap(fn, in_axes=(1, 1, 1))
+vmap(vmap(fn, in_axes=(None, 1, 1)), in_axes=(1, None, None))
+`}</code
+    ></pre>
+<p>
+    For now, we will keep it and later train a transformer with our MHA
+    implementation to experimentally check if our new approach even works at
+    all.
+</p>
