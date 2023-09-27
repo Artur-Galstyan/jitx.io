@@ -113,3 +113,77 @@ hello world?%`}</code
     matrix multiplication, but for now it's time to get some rest. All of this memory
     management takes its toll on you.
 </p>
+
+<h1>Day 2 - Matrices</h1>
+
+<p>
+    On my second day, I wanted to perform matrix multiplication, so get started,
+    I tried to define a matrix. Unfortunately, I forgot to turn off GitHub
+    Copilot and it spoiled it for me:
+</p>
+<pre><code class="language-c"
+        >{`
+#include <stdio.h>
+
+int main(void)
+{
+    int matrix[3][3] = {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}};
+    printf("%d", matrix[1][1]);
+    return 0;
+}
+`}</code
+    ></pre>
+<p>
+    After turning off GH CP, and compiling and executing the code, it printed <code
+        >5%</code
+    >
+    to the terminal. I still don't know where that percent sign is coming from, but
+    for now, I'll just accept that it's just some kind of glitch in the matrix. After
+    creating another matrix, it was time to write my first function other than the
+    <code>main</code> function. Here's my first attempt, which was once again riddled
+    with syntax errors:
+</p>
+<pre><code class="language-c"
+        >{`int[][] matrixAddition(int a[][], int b[][])
+{
+    int matrix[3][3] = {
+        {0, 0, 0},
+        {0, 0, 0},
+        {0, 0, 0},
+    };
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            matrix[i][j] = a[i][j] + b[i][j];
+        }
+    }
+
+    return matrix;
+}
+`}</code
+    ></pre>
+<p>
+    This was the point at which I decided that I need some help. Time to watch
+    some tutorials. After a bit of time, I decided to take a step back. Instead
+    of matrix addition, I'd start simpler by iterating over the array and
+    outputting the values of the matrix to the console according to their
+    position in the matrix. In Python, you would use <code>range(len(...))</code
+    >
+    to get the length of an array, but apparently not so in <code>C</code>. In
+    <code>C</code> you have to calculate the total number of bytes used in an
+    array and divide that by the number of bytes for the first element. In the
+    matrix above, each <code>int</code> takes up 4 bytes, thus making the whole
+    matrix 36 bytes because 4 * 9 = 36. To get the number of bytes of
+    <i>something</i>
+    in <code>C</code>, you use the <code>sizeof(...)</code> function, e.g.:
+</p>
+<pre><code class="language-c"
+        >{`
+printf("%lu", sizeof(b));
+`}</code
+    ></pre>
