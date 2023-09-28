@@ -1,5 +1,6 @@
 <script lang="ts">
     import HintBox from "$lib/components/HintBox.svelte";
+    import Katex from "$lib/components/Katex.svelte";
 </script>
 
 <p>
@@ -182,8 +183,192 @@ int main(void)
     <i>something</i>
     in <code>C</code>, you use the <code>sizeof(...)</code> function, e.g.:
 </p>
+<pre><code class="language-c">{`printf("%lu", sizeof(b));`}</code></pre>
+<p>So, to iterate over a 2d matrix, we'd do something like this:</p>
 <pre><code class="language-c"
-        >{`
-printf("%lu", sizeof(b));
+        >{`int a[3][3] = {
+    {1, 2, 3},
+    {4, 5, 6},
+    {7, 8, 9}};
+int rows = sizeof(a) / sizeof(a[0]);
+int columns = sizeof(a[0]) / sizeof(a[0][0]);
+for (int i = 0; i < rows; i++)
+{
+    for (int j = 0; j < columns; j++)
+    {
+        printf("[%d][%d]=%d\\n", i, j, a[i][j]);
+    }
+}
 `}</code
     ></pre>
+<pre><code class="language-text"
+        >{`clang day2.c && ./a.out
+[0][0]=1
+[0][1]=2
+[0][2]=3
+[1][0]=4
+[1][1]=5
+[1][2]=6
+[2][0]=7
+[2][1]=8
+[2][2]=9
+`}</code
+    ></pre>
+<p>
+    Armed with this new knowledge, I went back to my previous function, but this
+    is where I noticed that <b>I can't even return a matrix</b>! Instead, I have
+    to pre-allocate some memory and fill the values in the function itself.
+    Then, I noticed another error. I wanted to make my function be as generic as
+    possible, but that's not possible in <code>C</code>. You need to be specific
+    in your arguments about how large the arrays are. This is quite the stark
+    contrast to Python.
+</p>
+
+<pre><code class="language-c"
+        >{`#include <stdio.h>
+
+void matrixAddition(int rows, int columns, int a[rows][columns], int b[rows][columns], int result[rows][columns])
+{
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < columns; j++)
+        {
+            result[i][j] = a[i][j] + b[i][j];
+        }
+    }
+}
+
+int main(void)
+{
+    int b[3][3] = {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}};
+
+    int a[3][3] = {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}};
+    int rows = sizeof(a) / sizeof(a[0]);
+    int columns = sizeof(a[0]) / sizeof(a[0][0]);
+
+    int result[rows][columns];
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < columns; j++)
+        {
+            printf("[%d][%d]=%d\\n", i, j, result[i][j]);
+        }
+    }
+    matrixAddition(rows, columns, a, b, result);
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < columns; j++)
+        {
+            printf("[%d][%d]=%d\\n", i, j, result[i][j]);
+        }
+    }
+    return 0;
+}
+`}</code
+    ></pre>
+<pre><code class="language-text"
+        >{`
+clang day2.c && ./a.out
+[0][0]=0
+[0][1]=0
+[0][2]=0
+[1][0]=0
+[1][1]=0
+[1][2]=0
+[2][0]=0
+[2][1]=0
+[2][2]=1871310864 // wtf is this?
+[0][0]=2
+[0][1]=4
+[0][2]=6
+[1][0]=8
+[1][1]=10
+[1][2]=12
+[2][0]=14
+[2][1]=16
+[2][2]=18
+`}</code
+    ></pre>
+
+<p>
+    <code>C</code> likes to be as explicit as possible and seems to follow the
+    functional programming paradigm. Now, it was time to implement matrix
+    multiplication. Here's my final result. Note, that this is - by far - not
+    the most efficient implementation of matrix multiplication, as this is <Katex
+        math={"\\mathcal{O}(n^3)"}
+    /> and most efficient algorithms can go up to <Katex
+        math={"\\mathcal{O}(n^2.3728596)"}
+    />.
+</p>
+
+<pre><code class="language-c"
+        >{`
+void matrixMultiplication(int aRows, int aColumns, int bColumns, int a[aRows][aColumns], int b[aColumns][bColumns], int result[aRows][bColumns])
+{
+    // a b c b -> a b - b c = a c
+    // aRows aColumns X aColumns bRows
+
+    for (int i = 0; i < aRows; i++)
+    {
+        for (int j = 0; j < bColumns; j++)
+        {
+            int temp = 0;
+            for (int k = 0; k < aColumns; k++)
+            {
+                temp += a[i][k] * b[k][j];
+            }
+            result[i][j] = temp;
+        }
+    }
+}
+
+
+int main(void)
+{
+
+    int a[2][3] = {
+        {1, 2, 3},
+        {4, 5, 6}};
+
+    int b[3][4] = {
+        {1, 2, 3, 4},
+        {5, 6, 7, 8},
+        {9, 10, 11, 12}};
+
+    int aRows = sizeof(a) / sizeof(a[0]);
+    int aColumns = sizeof(a[0]) / sizeof(a[0][0]);
+
+    int bRows = sizeof(b) / sizeof(b[0]);
+    int bColumns = sizeof(b[0]) / sizeof(b[0][0]);
+
+    int result[aRows][bColumns];
+
+    matrixMultiplication(aRows, aColumns, bColumns, a, b, result);
+    for (int i = 0; i < aRows; i++)
+    {
+        for (int j = 0; j < bColumns; j++)
+        {
+            printf("%d ", result[i][j]);
+        }
+        printf("\\n");
+    }
+    return 0;
+}
+`}</code
+    ></pre>
+<pre><code class="language-text"
+        >{`
+38 44 50 56 
+83 98 113 128 
+`}</code
+    ></pre>
+<p>
+    Great! We have implemented matrix multiplication in <code>C</code>!
+    Tomorrow, we will start using <code>C</code> in embedded systems!
+</p>
