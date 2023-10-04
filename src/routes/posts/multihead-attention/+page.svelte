@@ -477,12 +477,13 @@ class MultiheadAttention(eqx.Module):
     The rough idea is to have kind-of a nested for-loop. The outer <code
         >vmap</code
     >
-    maps over axis 1 of the queries (i.e. the number of heads - usually) while the
-    inner <code>vmap</code> maps over the key and value
-    <code>multihead_dim</code>. Upon closer inspection it would probably make
-    more sense to have a single value for the <code>multihead_dim</code>, since
-    - at the very least - the key and value dimensions must be the same
-    (otherwise, we'd need a third <code>vmap</code> for
+    maps over axis 1 of the keys and values while the inner <code>vmap</code>
+    maps over axis 1 of the queries (which is usually the number of heads). Upon
+    closer inspection it would probably make more sense to have a single value for
+    the <code>multihead_dim</code>, since - at the very least - the key and
+    value dimensions must be the same (otherwise, we'd need a third
+    <code>vmap</code>
+    for
     <code>value_multihead_dim</code>). Actually, let's do that right now.
 </p>
 <pre><code class="language-python"
@@ -532,3 +533,107 @@ vmap(vmap(fn, in_axes=(None, 1, 1)), in_axes=(1, None, None))
     implementation to experimentally check if our new approach even works at
     all.
 </p>
+<p>
+    Let's implement our new strategy. First, we will update the <code
+        >dot_product_attention</code
+    >
+    function to compute the <code>qkv_matmul</code> matrix directly using the value
+    projections, while also keeping in mind our new matrix dimensions, which I have
+    added to the function signature:
+</p>
+<pre><code class="language-python"
+        >{`def dot_product_attention(
+    query_projection: Float[Array, "max_seq_len query_embedding_dim"],
+    key_projection: Float[Array, "max_seq_len key_embedding_dim"],
+    value_projection: Float[Array, "max_seq_len value_embedding_dim"],
+    mask: Optional[Array | None],
+) -> Array:
+    ic(query_projection.shape, key_projection.shape, value_projection.shape)
+
+    attention_weights = query_projection @ key_projection.T
+    attention_weights = attention_weights / jnp.sqrt(key_projection.shape[-1])
+    attention_weights = jax.nn.softmax(attention_weights, axis=-1)
+    ic(attention_weights.shape)
+
+    qkv_matmul = attention_weights @ value_projection
+
+    return qkv_matmul
+`}</code
+    ></pre>
+<p>
+    Here is the part that will perform the inner <code>vmap</code>
+</p>
+<pre><code class="language-python"
+        >{`
+def vmapped_attention(query_heads, key_heads, value_heads, mask):
+    attn_fn = ft.partial(dot_product_attention, mask=mask)
+    ic(query_heads.shape, key_heads.shape, value_heads.shape)
+    # Inner VMAP
+    dpa = jax.vmap(
+        lambda q, k, v: attn_fn(q, k, v),
+        in_axes=(1, None, None),
+        out_axes=1,
+    )(query_heads, key_heads, value_heads)
+    return dpa
+`}</code
+    ></pre>
+
+<p>
+    Let's also adjust our MHA implementation to use the double <code>vmap</code>
+    strategy:
+</p>
+<pre><code class="language-python"
+        >{`
+class MultiheadAttention(eqx.Module):
+    ...
+
+    def __call__(self, x: Float[Array, "max_seq_len input_dim"]):
+        ...
+        pt_vmapped_fn = ft.partial(
+            vmapped_attention,
+            mask=None,
+        )
+
+        
+        # Outer VMAP
+        qkv_matmul = jax.vmap(
+            pt_vmapped_fn,
+            in_axes=(None, 1, 1),
+        )(query, key, value)
+
+        qkv_matmul = jnp.sum(qkv_matmul, axis=0)
+
+        # Taking the mean over the d dimension
+        qkv_matmul = qkv_matmul / self.kv_multihead_dim
+        
+
+        concatenation = qkv_matmul.reshape(seq_len, -1)
+        output = jax.vmap(self.output)(concatenation)
+        
+        return output
+
+key, subkey = jax.random.split(key)
+mha = MultiheadAttention(query_embedding_dim, key_embedding_dim, value_embedding_dim, query_input_dim, key_input_dim, value_input_dim, num_heads, output_dim, query_embedding_dim, kv_multihead_dim, key)
+x = jax.random.normal(subkey, (max_seq_len, query_input_dim))
+output = mha(x)
+`}</code
+    ></pre>
+<pre><code class="language-text"
+        >{`
+ic| query.shape: (10, 4, 32)
+    key.shape: (10, 4, 32)
+    value.shape: (10, 4, 32)
+ic| query_heads.shape: (10, 4, 32)
+    key_heads.shape: (10, 32)
+    value_heads.shape: (10, 32)
+ic| query_projection.shape: (10, 32)
+    key_projection.shape: (10, 32)
+    value_projection.shape: (10, 32)
+ic| attention_weights.shape: (10, 10)
+ic| qkv_matmul.shape: (10, 4, 32)
+ic| concatenation.shape: (10, 128)
+ic| output.shape: (10, 32)
+`}</code
+    ></pre>
+
+<p>As you can see, the output shape matches exactly what we had before.</p>

@@ -36,6 +36,7 @@ model Post {
   thumbnail            Boolean   @default(false)
   thumbnailDescription String?
   Comment              Comment[]
+  info                 String?
 }
 
 model Comment {

@@ -20,13 +20,20 @@
             </div>
 
             {#if post.status === "DRAFT"}
-                <div class="text-warning">Draft</div>
+                <div class="text-warning my-auto">Draft</div>
             {:else if post.status === "PLANNED"}
-                <div class="text-info">Planned</div>
+                <div class="text-info my-auto">Planned</div>
             {/if}
         </div>
-        <div class="my-auto flex-1 font-bold">
-            {post.title}
+        <div class="my-auto flex-1 font-bold flex flex-col">
+            <div>
+                {post.title}
+            </div>
+            {#if post.info}
+                <div class="text-info text-xs my-2">
+                    {post.info}
+                </div>
+            {/if}
         </div>
         <button
             class="btn btn-xs btn-info btn-outline my-auto"
