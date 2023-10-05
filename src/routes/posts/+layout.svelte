@@ -50,8 +50,8 @@
     <meta name="twitter:description" content={post.shortDescription} />
     <meta name="twitter:image" content={getStaticFile("thumbnail.webp")} />
 </svelte:head>
-<main class="flex justify-center">
-    <div class="w-[95%] md:w-[90%] mx-auto">
+<article class="flex justify-center">
+    <div class="w-[95%] md:w-[50%] mx-auto">
         <h1 class="text-center font-extrabold py-0 my-0">
             {post.title}
         </h1>
@@ -99,9 +99,11 @@
             <slot />
         </div>
     </div>
-</main>
+</article>
 <div class="h-[10rem]" />
 
-<CommentSection />
+<div class="w-1/2 mx-auto">
+    <CommentSection />
+</div>
 
 <div class="h-[10rem]" />

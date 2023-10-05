@@ -19,7 +19,7 @@
     }
 
     .katex {
-        @apply overflow-auto;
+        @apply overflow-auto py-1;
     }
 }
 .ProseMirror:focus {

@@ -7,6 +7,7 @@
     import { currentUser } from "$lib/state/currentUser";
     import { page } from "$app/stores";
     import LoginDialog from "$lib/components/LoginDialog.svelte";
+    import "@fontsource/fira-code";
 
     inject({ mode: dev ? "development" : "production" });
 
@@ -17,7 +18,7 @@
     <title>JITx</title>
     <script src="https://www.google.com/recaptcha/api.js"></script>
 </svelte:head>
-<main class="w-[90%] md:w-1/2 mx-auto">
+<main class="mx-auto">
     <Navbar />
     <slot />
 </main>
