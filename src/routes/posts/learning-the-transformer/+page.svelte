@@ -340,7 +340,7 @@ Number of bits = 6593445888`}</code
         <i>video title</i>, <i>description</i> etc. Let's say there are only 3 videos
         in total on YouTube with the following titles:
     </p>
-    <ul>
+    <ul class="list list-disc">
         <li>cats walking</li>
         <li>horses running</li>
         <li>dogs jumping</li>
@@ -350,7 +350,7 @@ Number of bits = 6593445888`}</code
         fits best. Let's say, their recommender systems computes these
         <b>values</b>:
     </p>
-    <ul>
+    <ul class="list list-disc">
         <li>cats walking - 0.7</li>
         <li>horses running - 0.1</li>
         <li>dogs jumping - 0.2</li>
@@ -380,16 +380,7 @@ Number of bits = 6593445888`}</code
         <i>score</i> matrix, which holds the self attention information. In our simplified
         example:
     </p>
-    <figure class="flex flex-col space-y-4">
-        <img
-            src={getStaticFile("SASimple.drawio.svg")}
-            alt="Example"
-            class="h-full"
-        />
-        <div class="text-sm text-gray-400 text-center">
-            Attention Score Matrix
-        </div>
-    </figure>
+    <Figure path="SASimple.drawio.svg" caption="Attention Score Matrix" />
     <p>
         The result of the matrix multiplication of <b>query</b> and
         <b>key</b> can lead to very large numbers, which is why after the multiplication
@@ -672,7 +663,7 @@ output = matmul_vmap(attention_scores, v)
         axis 1, which is <Katex math={"h"} />. To be even more specific, this is
         what happens:
     </p>
-    <ol>
+    <ol class="list list-disc">
         <li>
             We dot product <Katex math={"T \\times h \\times T"} /> with <Katex
                 math={"T \\times h \\times d_k"}
