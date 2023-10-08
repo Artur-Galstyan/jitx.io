@@ -27,10 +27,6 @@
     let posts = $page.data.posts;
 </script>
 
-<div class="text-center text-lg font-bold my-4">
-    ⚠️ This page is still under construction! ⚠️
-</div>
-
 <div class="overflow-x-auto w-3/4 mx-auto">
     <div class="flex justify-between">
         <div class="font-extrabold text-lg my-4">Blog Posts</div>
