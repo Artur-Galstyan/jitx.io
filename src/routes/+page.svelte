@@ -56,4 +56,40 @@
             {/each}
         </tbody>
     </table>
+
+    <div class="font-extrabold text-lg my-4">Projects</div>
+    <table class="table">
+        <!-- head -->
+        <thead>
+            <tr>
+                <th>Last Updated</th>
+                <th>Name</th>
+                <th>Link</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {#each $page.data.projects as project}
+                <tr
+                    class="hover:bg-gray-100 cursor-pointer"
+                    on:click={() => goto(`${project.link}`)}
+                >
+                    <td>
+                        {new Date(project.updatedAt).toLocaleDateString(
+                            "en-CA",
+                            {
+                                year: "numeric",
+                                month: "2-digit",
+                                day: "2-digit"
+                            }
+                        )}
+                    </td>
+                    <td class="font-bold">{project.name}</td>
+
+                    <td><a class="link" href={project.link}>Link</a></td>
+                    <td>{project.shortDescription}</td>
+                </tr>
+            {/each}
+        </tbody>
+    </table>
 </div>

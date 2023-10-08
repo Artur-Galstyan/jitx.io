@@ -23,6 +23,15 @@ enum Status {
   PUBLISHED
 }
 
+model Project {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  name             String
+  link             String
+  shortDescription String?
+}
+
 model Post {
   id                   String    @id @default(cuid())
   createdAt            DateTime  @default(now())

@@ -8,5 +8,11 @@ export const load = (async ({ request, locals }) => {
         }
     });
 
-    return { posts: posts };
+    let projects = await prisma.project.findMany({
+        orderBy: {
+            createdAt: "desc"
+        }
+    });
+
+    return { posts: posts, projects: projects };
 }) satisfies PageServerLoad;
