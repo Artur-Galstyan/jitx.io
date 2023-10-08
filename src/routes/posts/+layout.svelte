@@ -8,6 +8,8 @@
     import Icon from "svelte-icons-pack";
     import AiOutlineGithub from "svelte-icons-pack/ai/AiOutlineGithub";
     import CommentSection from "$lib/components/CommentSection.svelte";
+    import AiFillUpCircle from "svelte-icons-pack/ai/AiFillUpCircle";
+    import { fade } from "svelte/transition";
 
     hljs.registerLanguage("python", python);
     hljs.registerLanguage("c", c);
@@ -20,8 +22,11 @@
     const getStaticFile = (path: string) => {
         return `${$page.url.pathname}/${path}`;
     };
+
+    let scrollY = 0;
 </script>
 
+<svelte:window bind:scrollY />
 <svelte:head>
     <title>
         {post.title}
@@ -50,7 +55,7 @@
     <meta name="twitter:description" content={post.shortDescription} />
     <meta name="twitter:image" content={getStaticFile("thumbnail.webp")} />
 </svelte:head>
-<article class="flex justify-center">
+<article class="flex justify-center relative">
     <div class="w-[95%] md:w-[50%] mx-auto">
         <h1 class="text-center font-extrabold py-0 my-0">
             {post.title}
@@ -99,6 +104,17 @@
             <slot />
         </div>
     </div>
+    {#if scrollY > 100}
+        <button
+            transition:fade
+            on:click={() => {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            class="fixed bottom-[5%] right-[5%] md:bottom-[20%] md:right-[10%]"
+        >
+            <Icon src={AiFillUpCircle} size="32" color="lightblue" />
+        </button>
+    {/if}
 </article>
 <div class="h-[10rem]" />
 

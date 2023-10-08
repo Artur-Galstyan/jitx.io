@@ -31,18 +31,19 @@
     "@auth/core": "^0.16.1",
     "@auth/prisma-adapter": "^1.0.3",
     "@auth/sveltekit": "^0.3.9",
-    "@fontsource/fira-code": "^5.0.12",
+    "@fontsource/fira-code": "^5.0.13",
     "@prisma/client": "^5.4.1",
     "@tailwindcss/nesting": "^0.0.0-insiders.565cd3e",
     "@tiptap/core": "^2.1.11",
     "@tiptap/extension-placeholder": "^2.1.11",
     "@tiptap/pm": "^2.1.11",
     "@tiptap/starter-kit": "^2.1.11",
-    "@vercel/analytics": "^1.0.2",
-    "daisyui": "^3.9.1",
+    "@vercel/analytics": "^1.1.0",
+    "daisyui": "^3.9.2",
+    "fuse.js": "^6.6.2",
     "katex": "^0.16.9",
     "svelte-highlight": "^7.3.0",
     "svelte-icons-pack": "^2.1.0",
-    "sweetalert2": "^11.7.31"
+    "sweetalert2": "^11.7.32"
   }
 }

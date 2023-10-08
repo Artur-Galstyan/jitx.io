@@ -51,23 +51,8 @@
         transformer architecture.
     </p>
     <div class=" flex justify-center space-x-4">
-        <figure class="flex flex-col">
-            <img
-                src={getStaticFile("Transformer.drawio.svg")}
-                alt="Encoder"
-                class="h-full"
-            />
-            <div class="text-sm text-gray-400 text-center">Encoder</div>
-        </figure>
-
-        <figure class="flex flex-col">
-            <img
-                src={getStaticFile("Decoder.drawio.svg")}
-                alt="Decoder"
-                class="h-full"
-            />
-            <div class="text-sm text-gray-400 text-center">Decoder</div>
-        </figure>
+        <Figure path="Transformer.drawio.svg" caption="Transformer" />
+        <Figure path="Decoder.drawio.svg" caption="Decoder" />
     </div>
     <p>
         The traditional transformer architecture consists of two parts: the
@@ -251,18 +236,7 @@ Number of bits = 6593445888`}</code
         MHA was just a single box, but there's a lot going on in that box. So
         let's zoom in a bit.
     </p>
-    <div class="flex justify-center space-x-4">
-        <figure class="flex flex-col space-y-4">
-            <img
-                src={getStaticFile("MHA.drawio.svg")}
-                alt="MHA"
-                class="h-full"
-            />
-            <div class="text-sm text-gray-400 text-center">
-                Multi-Head Attention
-            </div>
-        </figure>
-    </div>
+    <Figure path="MHA.drawio.svg" caption="Multi-Head Attention" />
     <p>
         Before we dive deep into the <i>how</i> and <i>why</i>, let's first
         identify our trainable parameters. As you can see, there are 4 linear
@@ -319,16 +293,7 @@ Number of bits = 6593445888`}</code
         In self attention, on the other hand, the attention scores are
         calculated <b>within the sentence itself</b>!
     </p>
-    <figure class="flex flex-col space-y-4">
-        <img
-            src={getStaticFile("SelfAttention.drawio.svg")}
-            alt="SelfAttention"
-            class="h-full"
-        />
-        <div class="text-sm text-gray-400 text-center">
-            Self Attention Example
-        </div>
-    </figure>
+    <Figure path="SelfAttention.drawio.svg" caption="Self Attention" />
 </section>
 <section>
     <h2>Multi-Head Attention (again)</h2>
@@ -976,14 +941,7 @@ transformer = Transformer(n_dims=n_vocab, n_embd=N_EMBD, n_heads=N_HEADS, key=ke
         reference:
     </p>
 
-    <figure class="flex flex-col">
-        <img
-            src={getStaticFile("Decoder.drawio.svg")}
-            alt="Decoder"
-            class="h-full w-1/2 mx-auto"
-        />
-        <div class="text-sm text-gray-400 text-center">Decoder</div>
-    </figure>
+    <Figure path={"Decoder.drawio.svg"} caption="Decoder" />
     <p>
         <b
             >For the remainder of this blog post, we will focus on the decoder
