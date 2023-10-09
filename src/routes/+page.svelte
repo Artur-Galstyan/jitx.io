@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { goto, preloadCode, preloadData } from "$app/navigation";
     import { page } from "$app/stores";
     import Fuse from "fuse.js";
     function capitalizeString(str: string) {
@@ -57,8 +57,11 @@
         <tbody>
             {#each posts as post}
                 <tr
+                    on:mouseenter={() => {
+                        preloadData(`/posts/${post.slug}`);
+                    }}
+                    on:click={async () => await goto(`/posts/${post.slug}`)}
                     class="hover:bg-gray-100 cursor-pointer"
-                    on:click={() => goto(`/posts/${post.slug}`)}
                 >
                     <td class="text-gray-400 hidden md:table-cell"
                         >{new Date(post.createdAt).toLocaleDateString("en-CA", {
