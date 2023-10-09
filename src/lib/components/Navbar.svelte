@@ -1,3 +1,8 @@
+<script>
+    import { transisting } from "$lib/state/transisting";
+    import { fade } from "svelte/transition";
+</script>
+
 <nav class="flex">
     <div class="flex flex-1">
         <a
@@ -18,4 +23,9 @@
             <div class="text-xs text-gray-400">by Artur A. Galstyan</div>
         </div>
     </div>
+    {#if $transisting}
+        <div>
+            <span transition:fade class="loading loading-spinner loading-lg" />
+        </div>
+    {/if}
 </nav>
