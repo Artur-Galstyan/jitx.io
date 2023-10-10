@@ -33,9 +33,9 @@ export const load = (async ({ request, locals, url }) => {
         }
     });
 
-    const allComments = await prisma.comment.findMany({});
+    const allComments = await prisma.comment.count({});
 
-    const totalPages = allComments.length / COMMENTS_PER_PAGE;
+    const totalPages = allComments / COMMENTS_PER_PAGE;
 
     return { post: post[0], comments: comments, totalPages: totalPages };
 }) satisfies LayoutServerLoad;

@@ -6,6 +6,7 @@
 <nav class="flex">
     <div class="flex flex-1">
         <a
+            data-sveltekit-preload-data
             class="cursor-pointer hover:bg-blue-600 hover:bg-opacity-20 transition duration-150 ease-in-out rounded-xl m-4"
             href="/"
         >
