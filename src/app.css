@@ -18,8 +18,16 @@
         @apply text-2xl font-bold my-4;
     }
 
+    h3 {
+        @apply text-xl font-bold my-4;
+    }
+
     .katex {
         @apply overflow-auto py-1;
+    }
+
+    article {
+        /* font-family: "Fira Code"; */
     }
 }
 .ProseMirror:focus {

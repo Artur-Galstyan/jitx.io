@@ -15,9 +15,10 @@
     <img
         src={getStaticFile(path)}
         alt="Example"
-        class="h-full mx-auto"
+        class="h-full mx-auto rounded-xl"
         {width}
         {height}
+        loading="lazy"
     />
     <div class="text-sm text-gray-400 text-center">{caption}</div>
 </figure>
