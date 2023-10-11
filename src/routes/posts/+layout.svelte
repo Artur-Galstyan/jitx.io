@@ -56,7 +56,7 @@
     <meta name="twitter:image" content={getStaticFile("thumbnail.webp")} />
 </svelte:head>
 <article class="flex justify-center relative">
-    <div class="w-[95%] md:w-[50%] mx-auto">
+    <div class="w-[95%] md:w-[50%] lg:w-[40%] mx-auto">
         <h1 class="text-center font-extrabold py-0 my-0">
             {post.title}
         </h1>
@@ -73,7 +73,7 @@
                 <img
                     src="{$page.url.pathname}/thumbnail.webp"
                     alt="thumbnail"
-                    class="w-1/3 mx-auto rounded-xl p-0 m-0 mt-4"
+                    class="w-1/2 mx-auto rounded-xl p-0 m-0 mt-4"
                 />
 
                 <div class="text-sm text-gray-400 text-center">

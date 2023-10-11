@@ -29,7 +29,7 @@
 
 <svelte:head>
     <title>JITx</title>
-    <script src="https://www.google.com/recaptcha/api.js"></script>
+    <script defer src="https://www.google.com/recaptcha/api.js"></script>
 </svelte:head>
 <main class="mx-auto">
     <Navbar />

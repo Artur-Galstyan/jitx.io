@@ -8,17 +8,16 @@
     };
 
     export let width: number = 400;
-    export let height: number = 400;
 </script>
 
 <figure class="flex flex-col space-y-4">
     <img
         src={getStaticFile(path)}
         alt="Example"
-        class="h-full mx-auto rounded-xl"
-        {width}
-        {height}
+        class="my-auto mx-auto rounded-xl"
         loading="lazy"
+        fetchpriority="low"
+        {width}
     />
     <div class="text-sm text-gray-400 text-center">{caption}</div>
 </figure>
