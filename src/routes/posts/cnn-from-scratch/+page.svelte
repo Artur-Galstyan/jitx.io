@@ -177,4 +177,47 @@ def generate_dataset(n=500, batch_size=16):
     to every value of the matrix. The result of all of this is the first of the output
     matrices. We then repeat this process for every kernel.
 </p>
-<Figure path="fp1.avif" caption="Foward Propagation" />
+<div class="flex justify-center space-x-2">
+    <Figure path="fp2.avif" caption="" />
+    <Figure path="fp1.avif" caption="" />
+</div>
+<p>
+    More generally, we can write the formula for the forward propagation like
+    this. This is where we have to bring back our batch size, that we omitted in
+    the beginning. This forward propagation step has to be performed for every
+    training example in the batch, which means we have to iterate over our batch
+    and then perform forward propagation for every datapoint.
+</p>
+<Figure path="fpeq.avif" caption="Forward Propagation Equation" />
+<p>Let's implement this in Python.</p>
+<pre><code class="language-python"
+        >{`
+def conv2d_forward(x: np.array, kernels: np.array, bias: np.array):
+    c_out, c_in, k, _ = kernels.shape
+    N, c_in, h_in, w_in = x.shape
+    h_out = h_in - k + 1
+    w_out = w_in - k + 1
+    output_shape = N, c_out, h_out, w_out
+    output = np.zeros(shape=output_shape)
+    for n in range(N):
+        for j in range(c_out):
+            output[n, j] = bias[j]
+            for i in range(c_in):
+                output[n, j] += correlate2d(
+                    x[n, i], kernels[j, i], mode="valid"
+                )
+    return output
+`}</code
+    ></pre>
+<p>
+    First we gather all the hyper parameters from our input. We can get the
+    number of channels from the kernels and the batch size and the dimensions of
+    the image from the input matrix. With that we initialise the empty output
+    array. We then iterate over every sample in our batch and perform forward
+    propagation pretty much exactly as we've written it in our formula. This
+    <code>correlate2d()</code> function comes from SciPy and is a neat helper for
+    us. In Numpy, there is only the “normal” cross-correlation which - in mathematical
+    terms - is an operation between two functions, not necessarily between matrices.
+    This function from ScipPy does this operation on 2d matrices, so we won't have
+    to implement that from scratch. Finally, we return the output.
+</p>
