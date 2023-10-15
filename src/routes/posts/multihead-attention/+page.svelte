@@ -637,3 +637,13 @@ ic| output.shape: (10, 32)
     ></pre>
 
 <p>As you can see, the output shape matches exactly what we had before.</p>
+<p>
+    The next step is to add masking, which we can simply copy from the <a
+        class="link"
+        href="multihead-attention">other blog post</a
+    >. If we build a transformer around this MHA implementation and test our
+    implementation on the TinyShakespeare dataset, then (at least in my
+    preliminary tests) it doesn't seem to work! I'm not exactly sure why, but I
+    suspect that it has something to do with the <code>vmap</code> strategy. I will
+    investigate this further in the future and publish my findings in another post.
+</p>
