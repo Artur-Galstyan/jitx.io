@@ -7,6 +7,11 @@ export const load = (async ({ request, locals, params, url }) => {
     const skip = url.searchParams.get("skip") || "0";
 
     let posts = await prisma.post.findMany({
+        where: {
+            NOT: {
+                status: "HIDDEN"
+            }
+        },
         orderBy: {
             createdAt: "desc"
         },
