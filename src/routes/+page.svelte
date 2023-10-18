@@ -60,6 +60,7 @@
     <div class="grid grid-cols-1 gap-x-2 gap-y-2">
         {#each $page.data.posts as post, i}
             <div
+                hidden={post.status === "HIDDEN"}
                 tabindex={i}
                 role="button"
                 on:mouseenter={() => {
