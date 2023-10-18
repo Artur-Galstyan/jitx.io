@@ -7,6 +7,7 @@
     import { page } from "$app/stores";
     import LoginDialog from "$lib/components/LoginDialog.svelte";
     import "@fontsource/fira-code";
+    import "@fontsource/fira-code/700.css";
     import { onNavigate } from "$app/navigation";
     import { transisting } from "$lib/state/transisting";
 
@@ -33,7 +34,9 @@
 </svelte:head>
 <main class="mx-auto">
     <Navbar />
-    <slot />
+    <div class="md:w-[50%] md:mx-auto">
+        <slot />
+    </div>
 </main>
 
 <LoginDialog />

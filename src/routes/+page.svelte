@@ -44,53 +44,69 @@
             }}
         />
     </div>
-    <table class="table">
-        <!-- head -->
-        <thead>
-            <tr>
-                <th class="hidden md:table-cell">Created</th>
-                <th class="hidden md:table-cell">Updated</th>
-                <th class="text-center md:text-left">Title</th>
-                <th class="hidden md:table-cell">Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {#each posts as post}
-                <tr
-                    on:mouseenter={() => {
-                        preloadData(`/posts/${post.slug}`);
-                    }}
-                    on:click={async () => await goto(`/posts/${post.slug}`)}
-                    class="hover:bg-gray-100 cursor-pointer"
-                >
-                    <td class="text-gray-400 hidden md:table-cell"
-                        >{new Date(post.createdAt).toLocaleDateString("en-CA", {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit"
-                        })}</td
-                    >
-                    <td class="hidden md:table-cell">
-                        {new Date(post.updatedAt).toLocaleDateString("en-CA", {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit"
-                        })}
-                    </td>
-                    <td class="font-bold text-center md:text-justify"
-                        >{post.title}</td
-                    >
-                    <td
-                        class="hidden md:table-cell"
-                        class:text-green-400={post.status === "PUBLISHED"}
-                        class:text-yellow-400={post.status === "DRAFT"}
-                        class:text-blue-400={post.status === "PLANNED"}
-                        >{capitalizeString(post.status)}</td
-                    >
-                </tr>
-            {/each}
-        </tbody>
-    </table>
+
+    <div class="grid grid-cols-1 gap-x-2 gap-y-2">
+        {#each posts as post, i}
+            <div
+                tabindex={i}
+                role="button"
+                on:mouseenter={() => {
+                    preloadData(`/posts/${post.slug}`);
+                }}
+                on:keydown={() => {}}
+                on:keyup={() => {}}
+                on:keypress={() => {}}
+                on:click={async () => await goto(`/posts/${post.slug}`)}
+                class="card card-side rounded-xl hover:bg-accent hover:bg-opacity-40 transition duration-150 ease-in-out"
+            >
+                {#if post.thumbnail}
+                    <figure class="mx-auto w-[30%] md:w-[10rem] p-1 rounded-xl">
+                        <img
+                            src={"/posts/" + post.slug + "/thumbnail.webp"}
+                            alt={post.title}
+                            class="rounded-xl mx-auto w-full"
+                        />
+                    </figure>
+                {/if}
+                <div class="card-body px-4 py-4 my-0 w-full">
+                    <h2 class="card-title my-0 py-0 font-extrabold">
+                        {post.title}
+                    </h2>
+                    <p>{post.shortDescription}</p>
+                    <div class="card-actions">
+                        <div
+                            class="my-auto flex-1 text-gray-400 text-xs flex flex-col"
+                        >
+                            <div>
+                                <span class=" ">Last Updated</span>
+                                {new Date(post.updatedAt).toLocaleDateString(
+                                    "en-CA",
+                                    {
+                                        year: "numeric",
+                                        month: "2-digit",
+                                        day: "2-digit"
+                                    }
+                                )}
+                            </div>
+
+                            <div
+                                class:text-green-400={post.status ===
+                                    "PUBLISHED"}
+                                class:text-yellow-400={post.status === "DRAFT"}
+                                class:text-blue-400={post.status === "PLANNED"}
+                            >
+                                {capitalizeString(post.status)}
+                            </div>
+                        </div>
+                        <a href={"/posts/" + post.slug}>
+                            <button class="btn btn-primary btn-sm">Read</button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="divider w-1/2 mx-auto" />
+        {/each}
+    </div>
 
     <div class="font-extrabold text-lg my-4">Projects</div>
     <table class="table">

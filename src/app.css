@@ -29,6 +29,10 @@
     article {
         /* font-family: "Fira Code"; */
     }
+    .card-title {
+        font-family: "Fira Code";
+        font-weight: 700;
+    }
 }
 .ProseMirror:focus {
     outline: none;

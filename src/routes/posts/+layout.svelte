@@ -56,7 +56,7 @@
     <meta name="twitter:image" content={getStaticFile("thumbnail.webp")} />
 </svelte:head>
 <article class="flex justify-center relative">
-    <div class="w-[95%] md:w-[50%] lg:w-[40%] mx-auto">
+    <div class="w-[95%] md:w-[70%] lg:w-[60%] mx-auto">
         <h1 class="text-center font-extrabold py-0 my-0">
             {post.title}
         </h1>
