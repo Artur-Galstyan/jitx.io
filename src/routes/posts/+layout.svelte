@@ -51,7 +51,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta property="twitter:domain" content="jitx.io" />
     <meta property="twitter:url" content={$page.url.pathname} />
-    <meta name="twitter:title" content="One Week of C" />
+    <meta name="twitter:title" content={post.title} />
     <meta name="twitter:description" content={post.shortDescription} />
     <meta name="twitter:image" content={getStaticFile("thumbnail.webp")} />
 </svelte:head>

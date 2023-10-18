@@ -21,6 +21,7 @@ enum Status {
   DRAFT
   PLANNED
   PUBLISHED
+  HIDDEN
 }
 
 model Project {

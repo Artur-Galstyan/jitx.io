@@ -17,10 +17,6 @@
         idxJ += 1;
         return idxJ;
     };
-
-    const getStaticFile = (path: string) => {
-        return `${$page.url.pathname}/${path}`;
-    };
 </script>
 
 <section>
