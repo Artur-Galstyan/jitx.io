@@ -39,7 +39,7 @@
     $: currentPage = 1;
 </script>
 
-<div class="overflow-x-auto w-3/4 mx-auto">
+<div class="overflow-x-auto xl:w-3/4 mx-auto">
     <div class="flex justify-between">
         <div class="font-extrabold text-lg my-4">Blog Posts</div>
         <input
@@ -130,7 +130,7 @@
             class="join-item btn btn-outline">Previous page</button
         >
         <button
-            class:disabled={currentPage === totalPages}
+            class:btn-disabled={currentPage === totalPages}
             on:click={async () => {
                 currentPage++;
                 await goto("/?skip=" + (currentPage - 1) * pageSize);

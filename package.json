@@ -32,6 +32,7 @@
     "@auth/prisma-adapter": "^1.0.3",
     "@auth/sveltekit": "^0.3.9",
     "@fontsource/fira-code": "^5.0.13",
+    "@fontsource/ubuntu": "^5.0.8",
     "@prisma/client": "^5.4.1",
     "@tailwindcss/nesting": "^0.0.0-insiders.565cd3e",
     "@tiptap/core": "^2.1.11",

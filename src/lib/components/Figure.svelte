@@ -2,7 +2,7 @@
     import { page } from "$app/stores";
 
     export let path: string;
-    export let caption: string;
+    export let caption: string = "";
     const getStaticFile = (path: string) => {
         return `${$page.url.pathname}/${path}`;
     };
@@ -10,10 +10,10 @@
     export let width: number = 400;
 </script>
 
-<figure class="flex flex-col space-y-4">
+<figure class="w-full flex flex-col space-y-4">
     <img
         src={getStaticFile(path)}
-        alt="Example"
+        alt={caption}
         class="my-auto mx-auto rounded-xl"
         loading="lazy"
         fetchpriority="low"

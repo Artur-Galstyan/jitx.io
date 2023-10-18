@@ -12,14 +12,19 @@
 
     h1 {
         @apply text-3xl font-bold my-4;
+        font-family: "Fira Code";
     }
 
     h2 {
         @apply text-2xl font-bold my-4;
+
+        font-family: "Fira Code";
     }
 
     h3 {
         @apply text-xl font-bold my-4;
+
+        font-family: "Fira Code";
     }
 
     .katex {
@@ -32,6 +37,9 @@
     .card-title {
         font-family: "Fira Code";
         font-weight: 700;
+    }
+    body {
+        font-family: "Ubuntu";
     }
 }
 .ProseMirror:focus {

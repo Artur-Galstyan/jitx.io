@@ -8,6 +8,7 @@
     import LoginDialog from "$lib/components/LoginDialog.svelte";
     import "@fontsource/fira-code";
     import "@fontsource/fira-code/700.css";
+    import "@fontsource/ubuntu"; // Defaults to weight 400
     import { onNavigate } from "$app/navigation";
     import { transisting } from "$lib/state/transisting";
 
@@ -34,7 +35,7 @@
 </svelte:head>
 <main class="mx-auto">
     <Navbar />
-    <div class="md:w-[50%] md:mx-auto">
+    <div class="xl:w-[70%] 2xl:w-[50%] md:mx-auto">
         <slot />
     </div>
 </main>
