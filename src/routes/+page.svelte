@@ -1,6 +1,13 @@
 <script lang="ts">
-    import { goto, preloadCode, preloadData } from "$app/navigation";
+    import {
+        goto,
+        invalidate,
+        invalidateAll,
+        preloadCode,
+        preloadData
+    } from "$app/navigation";
     import { page } from "$app/stores";
+    import { POSTS_PER_PAGE } from "$lib/utils/constants";
     import Fuse from "fuse.js";
     function capitalizeString(str: string) {
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -25,6 +32,11 @@
 
     const fuse = new Fuse($page.data.posts, fuseOptions);
     let posts = $page.data.posts;
+
+    let pageSize = POSTS_PER_PAGE;
+    $: totalPosts = $page.data.totalPosts;
+    $: totalPages = Math.ceil(totalPosts / pageSize);
+    $: currentPage = 1;
 </script>
 
 <div class="overflow-x-auto w-3/4 mx-auto">
@@ -46,7 +58,7 @@
     </div>
 
     <div class="grid grid-cols-1 gap-x-2 gap-y-2">
-        {#each posts as post, i}
+        {#each $page.data.posts as post, i}
             <div
                 tabindex={i}
                 role="button"
@@ -107,7 +119,26 @@
             <div class="divider w-1/2 mx-auto" />
         {/each}
     </div>
-
+    <div class="join grid grid-cols-2">
+        <button
+            class:btn-disabled={currentPage <= 1}
+            on:click={async () => {
+                currentPage--;
+                await goto("/?skip=" + (currentPage - 1) * pageSize);
+                await invalidateAll();
+            }}
+            class="join-item btn btn-outline">Previous page</button
+        >
+        <button
+            class:disabled={currentPage === totalPages}
+            on:click={async () => {
+                currentPage++;
+                await goto("/?skip=" + (currentPage - 1) * pageSize);
+                await invalidateAll();
+            }}
+            class="join-item btn btn-outline">Next</button
+        >
+    </div>
     <div class="font-extrabold text-lg my-4">Projects</div>
     <table class="table">
         <!-- head -->
