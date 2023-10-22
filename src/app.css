@@ -2,7 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+.cubano {
+    font-family: "cubano", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
 @layer components {
+    a {
+        @apply link text-blue-400;
+    }
+    .header-text {
+        @apply cubano !important;
+    }
     ul {
         @apply list-disc w-3/4 mx-auto text-justify;
     }
@@ -111,4 +123,7 @@
 
 .grecaptcha-badge {
     visibility: hidden;
+}
+.katex-html {
+    padding: 3px;
 }

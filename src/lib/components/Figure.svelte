@@ -14,7 +14,7 @@
     <img
         src={getStaticFile(path)}
         alt={caption}
-        class="my-auto mx-auto rounded-xl"
+        class="my-auto mx-auto"
         loading="lazy"
         fetchpriority="low"
         {width}

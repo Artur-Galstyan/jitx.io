@@ -35,7 +35,7 @@
 </svelte:head>
 <main class="mx-auto">
     <Navbar />
-    <div class="xl:w-[70%] 2xl:w-[50%] md:mx-auto">
+    <div class="md:w-[90%] lg:w-[80%] xl:w-[70%] 2xl:w-[60%] md:mx-auto">
         <slot />
     </div>
 </main>

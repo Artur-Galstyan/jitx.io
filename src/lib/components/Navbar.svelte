@@ -14,9 +14,12 @@
         </a>
         <div class="my-auto">
             <span
-                class="font-extrabold text-transparent text-5xl bg-clip-text bg-gradient-to-r from-amber-400 to-pink-600"
-                >JITx</span
+                class="header-text font-extrabold text-transparent text-5xl bg-clip-text bg-gradient-to-r from-amber-400 to-pink-600"
+                >JIT</span
             >
+            <span class="header-text font-extrabold text-4xl text-sky-500">
+                x
+            </span>
 
             <div class="my-auto italic">
                 AI Projects and Software Engineering
