@@ -7,6 +7,7 @@
         preloadData
     } from "$app/navigation";
     import { page } from "$app/stores";
+    import Hero from "$lib/components/Hero.svelte";
     import { POSTS_PER_PAGE } from "$lib/utils/constants";
     import Fuse from "fuse.js";
     function capitalizeString(str: string) {
@@ -40,6 +41,7 @@
 </script>
 
 <div class="overflow-x-auto xl:w-3/4 mx-auto">
+    <Hero />
     <div class="flex justify-between">
         <div class="font-extrabold text-lg my-4">Blog Posts</div>
         <input
@@ -119,7 +121,7 @@
             <div class="divider w-1/2 mx-auto" />
         {/each}
     </div>
-    <div class="join grid grid-cols-2">
+    <div class:hidden={totalPages <= 1} class="join grid grid-cols-2">
         <button
             class:btn-disabled={currentPage <= 1}
             on:click={async () => {

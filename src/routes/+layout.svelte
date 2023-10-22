@@ -9,8 +9,10 @@
     import "@fontsource/fira-code";
     import "@fontsource/fira-code/700.css";
     import "@fontsource/ubuntu"; // Defaults to weight 400
+    import "@fontsource/ubuntu/700.css"; // Defaults to weight 400
     import { onNavigate } from "$app/navigation";
     import { transisting } from "$lib/state/transisting";
+    import Footer from "$lib/components/Footer.svelte";
 
     onNavigate((navigation) => {
         if (!document.startViewTransition) return;
@@ -33,11 +35,12 @@
     <title>JITx</title>
     <script defer src="https://www.google.com/recaptcha/api.js"></script>
 </svelte:head>
-<main class="mx-auto">
+<main class="mx-auto flex flex-col">
     <Navbar />
-    <div class="md:w-[90%] lg:w-[80%] xl:w-[70%] 2xl:w-[60%] md:mx-auto">
+    <div class="md:w-[90%] lg:w-[80%] xl:w-[70%] 2xl:w-[60%] md:mx-auto flex-1">
         <slot />
     </div>
+    <Footer />
 </main>
 
 <LoginDialog />
