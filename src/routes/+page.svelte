@@ -1,15 +1,11 @@
 <script lang="ts">
-    import {
-        goto,
-        invalidate,
-        invalidateAll,
-        preloadCode,
-        preloadData
-    } from "$app/navigation";
-    import { page } from "$app/stores";
+    import {goto, invalidateAll, preloadData} from "$app/navigation";
+    import {page} from "$app/stores";
     import Hero from "$lib/components/Hero.svelte";
-    import { POSTS_PER_PAGE } from "$lib/utils/constants";
+    import {POSTS_PER_PAGE} from "$lib/utils/constants";
     import Fuse from "fuse.js";
+    import type {Page} from "@sveltejs/kit";
+
     function capitalizeString(str: string) {
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     }
@@ -31,8 +27,13 @@
         keys: ["title", "tags"]
     };
 
-    const fuse = new Fuse($page.data.posts, fuseOptions);
+    let fuse = new Fuse($page.data.posts, fuseOptions);
     let posts = $page.data.posts;
+
+    page.subscribe((value: Page) => {
+        fuse = new Fuse(value.data.posts, fuseOptions);
+        posts = value.data.posts;
+    })
 
     let pageSize = POSTS_PER_PAGE;
     $: totalPosts = $page.data.totalPosts;
@@ -44,23 +45,30 @@
     <Hero />
     <div class="flex justify-between">
         <div class="font-extrabold text-lg my-4">Blog Posts</div>
+        <div class="flex-1"></div>
         <input
             type="text"
-            class="my-auto input input-sm"
+            class="my-auto input input-sm input-primary"
             placeholder="Search 🔎"
-            on:input={(e) => {
-                const query = e.target.value;
-                if (query.length > 0) {
-                    posts = fuse.search(query).map((result) => result.item);
-                } else {
-                    posts = $page.data.posts;
+            on:change={async(e) => {
+                await goto("/?search=" + e.target.value);
+                await invalidateAll();
+            }}
+            on:input={async(e) => {
+                if (e.target.value === "") {
+                   await goto("/");
+                   await invalidateAll();
                 }
+
             }}
         />
+        <div class="my-auto text-sm text-gray-400 mx-4">
+            Press <kbd>Enter</kbd> to search
+        </div>
     </div>
 
     <div class="grid grid-cols-1 gap-x-2 gap-y-2">
-        {#each $page.data.posts as post, i}
+        {#each posts as post, i}
             <div
                 tabindex={i}
                 role="button"
