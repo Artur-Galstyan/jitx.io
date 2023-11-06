@@ -1,5 +1,4 @@
 import type { RequestHandler } from "@sveltejs/kit";
-import { json } from "@sveltejs/kit";
 import { prisma } from "$lib/server/prisma.server";
 
 export const GET = (async ({ request, fetch }) => {
@@ -40,7 +39,7 @@ export const GET = (async ({ request, fetch }) => {
   </channel>
 </rss> 
     
-    `;
+    `.trim();
 
-  return json(0);
+  return new Response(xml, { headers });
 }) satisfies RequestHandler;
