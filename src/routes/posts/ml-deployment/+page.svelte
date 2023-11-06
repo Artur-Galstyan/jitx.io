@@ -1,6 +1,7 @@
 <script>
     import HintBox from "$lib/components/HintBox.svelte";
     import Figure from "$lib/components/Figure.svelte";
+    import CodeBox from "$lib/components/CodeBox.svelte";
 </script>
 
 <section>
@@ -281,4 +282,179 @@ if __name__ == "__main__":
     <HintBox content={`This is quite the overkill, because our inference only takes a new ms. But if you had a bigger
     model, such as a GAN or Stable Diffusion, then it makes sense to give the user access to the status of the
     inference.`}/>
+    <p>
+        Here's an overview of the final project, just so you know where everything lies:
+    </p>
+    <Figure path="project.webp" caption="Project structure"/>
+    <p>
+        Celery needs a place to store the results of the tasks. This is called the <i>Result Store</i>. In production,
+        you would probably use something like MySQL or Postgres, but to keep things simple, I created a simple SQLite
+        database using this command:
+    </p>
+    <div class="mockup-code">
+        <pre data-prefix="$"><code>sqlite3 results.db ".save results.db"</code></pre>
+    </div>
+    <p>
+        Let's look at the FastAPI part first. We need two endpoints: one to create a <i>task</i> and one to retrieve
+        the current status of a task.
+    </p>
+    <CodeBox filename="main.py" language="python" code={`
+from fastapi import FastAPI
+import uvicorn
+
+from mnist_cnn.worker import predict_number, celery
+
+app = FastAPI()
+
+
+@app.post("/task/")
+async def post_task():
+    async_res = predict_number.delay()
+    return async_res.id
+
+
+@app.get("/task/")
+async def get_task(task_id: str):
+    task_result = celery.AsyncResult(task_id)
+    return task_result.status
+
+
+def main():
+    uvicorn.run("main:app", port=8004, reload=True)
+
+
+if __name__ == "__main__":
+    main()`}/>
+    <p>
+        We'll get to the worker in just a moment. If you run this code and go to <code>localhost:8004/docs</code>, you
+        should see the API Swagger UI. From there you can test your api. Now, let's have a look at the worker.
+    </p>
+    <HintBox title="Celery Worker" content={`Celery workers are processes which eventually perform the tasks. They are
+    independent processes of the FastAPI app and they started differently as a result. Once they're done, they
+    store the result of the task in the backend.`}/>
+    <p>
+        Here's our worker code. Notice, that the ML part is currently missing and instead we just have a placeholder.
+        But that will get replaced very soon!
+    </p>
+    <CodeBox filename="worker.py" language="python" code={`
+import time
+import pathlib
+
+from celery import Celery
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+db_path = pathlib.Path(__name__).parent.absolute() / "results.db"
+CELERY_RESULT_BACKEND = f"db+sqlite:///{db_path}"
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+
+celery = Celery(__name__, broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
+
+
+@celery.task(name="predict_number")
+def predict_number():
+    time.sleep(1)
+    return 0  # for now, we will replace this with our model soon
+`}/>
+    <p>
+        That worker can easily be started using the following command:
+    </p>
+    <div class="mockup-code">
+        <pre data-prefix="$"><code>poetry run python3 -m  celery -A mnist_cnn.worker.celery worker --loglevel=INFO
+</code></pre>
+    </div>
+    <p>
+        But let's not actually do that yet. Instead go to the API at <code>localhost:8004/docs</code> and try to send a
+        <kbd>POST</kbd> request. You should get a task ID back. Now, go to <code>localhost:8004/task?task_id=...</code>
+        and you should see that the task is still pending. Now, let's start the worker and check the status of the
+        task again!
+    </p>
+    <p>
+        As you can see, the code is dead-simple. Just define the Celery object given the broker and backend and that's
+        it. If you have already some broker running somewhere and want to use that, great! If not, the following section
+        highlights how to set up RabbitMQ on a remote server (such as Linode in my case).
+    </p>
+</section>
+<section>
+    <h3>
+        Setting up RabbitMQ
+    </h3>
+    <p>
+        In my case, I'm using Linode. And if you want to allow remote connections to your RabbitMQ server, you need to
+        open up some ports: <code>4369, 5671-5672, 15671, 15672, 15691-15692, 25672</code>. <i>Do you really need all of
+        those?</i>
+        Honestly, I don't know. I just opened them all up just in case and it worked. Perhaps you - the reader - can do
+        an ablation study and write in the comments which ports are actually needed.
+    </p>
+    <p>
+        I'd also recommend to <b>dockerize everything!</b>. This means to run RabbitMQ in a docker container. It's
+        important
+        that when you do that, you also bind the container's ports to the one's from your host machine; otherwise, you
+        won't be able to connect to the RabbitMQ server and it will tell you <code>Connection refused</code>:
+    </p>
+    <div class="mockup-code">
+        <pre data-prefix="$"><code>docker run -d --hostname my-rabbit --name some-rabbit \
+            -e RABBITMQ_DEFAULT_USER=user -e RABBITMQ_DEFAULT_PASS=aligator3 \
+            -p 4369:4369 \
+            -p 5671:5671 \
+            -p 5672:5672 \
+            -p 15671:15671 \
+            -p 15691-15692:15691-15692 \
+            -p 25672:25672 \
+            -p 15672:15672 --network main_net  rabbitmq:3-management
+        </code></pre>
+    </div>
+    <p>
+        Then, you can also setup a reverse proxy and use a domain name to access the RabbitMQ management UI. This is my
+        nginx config (relevant part only):
+    </p>
+    <CodeBox filename="nginx.conf" language="nginx" code={`
+    upstream rabbitmq_management {
+            server some-rabbit:15672;
+    }
+
+    server {
+            listen 443 ssl;
+            server_name www.yourURL.com;
+
+            ssl_certificate /etc/letsencrypt/live/www.yourURL.com/fullchain.pem; # Adjust to your certificate's path
+                    ssl_certificate_key /etc/letsencrypt/live/www.yourURL.com/privkey.pem; # Adjust to your key's path
+                    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+
+                    location / {
+                            proxy_pass http://rabbitmq_management; # This must match the upstream name
+                                    proxy_set_header Host $http_host;
+                            proxy_set_header X-Real-IP $remote_addr;
+                            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                            proxy_set_header X-Forwarded-Proto $scheme;
+                            proxy_read_timeout 300;
+                            proxy_connect_timeout 300;
+                            proxy_redirect off;
+                    }
+    }
+`}/>
+    <p>
+        Afterwards, you would also start the Nginx docker container and map the ports 80 and 443 to the host machine.
+        Then, you can access the RabbitMQ management UI at your url.
+    </p>
+    <Figure path="rabbitmq.webp" caption="RabbitMQ Management UI" width={600}/>
+</section>
+<section>
+    <h3>
+        Creating our App and Using our Model
+    </h3>
+    <p>
+        If you've managed to get to this point, then congratulations! You've done the hard part. I for one needed 3
+        hours just to debug why my connection wasn't working until I realised that I forgot to bind the ports of the
+        docker container to the host machine. So, if you're stuck, don't worry, it's probably something simple.
+    </p>
+    <p>
+        At this point, you have all the building blocks to create your ML app and can theoretically deploy your workers
+        with the above script thousands of times and scale your model to the moon. Let's finish this up by creating our
+        drawing up where the user can draw digits and then - instead of our placeholder - put in our model. Later,
+        we will also add a webhook, so that the user gets notified when the inference is done. But if you don't need
+        that or you already know how to do that part, you can stop here. Otherwise, let's continue!
+    </p>
 </section>

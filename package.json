@@ -42,6 +42,7 @@
     "@vercel/analytics": "^1.1.1",
     "daisyui": "^3.9.4",
     "fuse.js": "^7.0.0",
+    "highlight.js": "^11.9.0",
     "katex": "^0.16.9",
     "svelte-highlight": "^7.4.1",
     "svelte-icons-pack": "^2.1.0",
