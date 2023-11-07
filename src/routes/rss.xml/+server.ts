@@ -31,6 +31,9 @@ export const GET = (async ({ request, fetch }) => {
       <pubDate>${post.updatedAt.toUTCString()}</pubDate>
       <author>mail@arturgalstyan.dev (Artur A. Galstyan)</author>
       <guid isPermaLink="true">https://jitx.io/posts/${post.slug}</guid>
+      <enclosure url="https://jitx.io/posts/${
+        post.slug
+      }/thumbnail.webp" type="image/webp"/>
     </item>
 `
       )
