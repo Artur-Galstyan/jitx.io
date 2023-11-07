@@ -2,6 +2,7 @@
     import python from "highlight.js/lib/languages/python";
     import c from "highlight.js/lib/languages/c";
     import nginx from "highlight.js/lib/languages/nginx";
+    import bash from "highlight.js/lib/languages/bash";
     import hljs from "highlight.js";
     import {onMount} from "svelte";
     import type {Post} from "@prisma/client";
@@ -15,6 +16,7 @@
     hljs.registerLanguage("python", python);
     hljs.registerLanguage("c", c);
     hljs.registerLanguage("nginx", nginx);
+    hljs.registerLanguage("bash", bash);
     const post: Post = $page.data.post;
 
     onMount(() => {

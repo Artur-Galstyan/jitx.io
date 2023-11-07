@@ -292,9 +292,8 @@ if __name__ == "__main__":
         you would probably use something like MySQL or Postgres, but to keep things simple, I created a simple SQLite
         database using this command:
     </p>
-    <div class="mockup-code">
-        <pre data-prefix="$"><code>sqlite3 results.db ".save results.db"</code></pre>
-    </div>
+    <CodeBox language="bash" code={`
+sqlite3 results.db ".save results.db"`}/>
     <p>
         Let's look at the FastAPI part first. We need two endpoints: one to create a <i>task</i> and one to retrieve
         the current status of a task.
@@ -362,10 +361,8 @@ def predict_number():
     <p>
         That worker can easily be started using the following command:
     </p>
-    <div class="mockup-code">
-        <pre data-prefix="$"><code>poetry run python3 -m  celery -A mnist_cnn.worker.celery worker --loglevel=INFO
-</code></pre>
-    </div>
+    <CodeBox language="bash" code={`
+poetry run python3 -m  celery -A mnist_cnn.worker.celery worker --loglevel=INFO `}/>
     <p>
         But let's not actually do that yet. Instead go to the API at <code>localhost:8004/docs</code> and try to send a
         <kbd>POST</kbd> request. You should get a task ID back. Now, go to <code>localhost:8004/task?task_id=...</code>
@@ -395,18 +392,16 @@ def predict_number():
         that when you do that, you also bind the container's ports to the one's from your host machine; otherwise, you
         won't be able to connect to the RabbitMQ server and it will tell you <code>Connection refused</code>:
     </p>
-    <div class="mockup-code">
-        <pre data-prefix="$"><code>docker run -d --hostname my-rabbit --name some-rabbit \
-            -e RABBITMQ_DEFAULT_USER=user -e RABBITMQ_DEFAULT_PASS=aligator3 \
-            -p 4369:4369 \
-            -p 5671:5671 \
-            -p 5672:5672 \
-            -p 15671:15671 \
-            -p 15691-15692:15691-15692 \
-            -p 25672:25672 \
-            -p 15672:15672 --network main_net  rabbitmq:3-management
-        </code></pre>
-    </div>
+    <CodeBox language="bash" code={`
+docker run -d --hostname my-rabbit --name some-rabbit \
+    -e RABBITMQ_DEFAULT_USER=user -e RABBITMQ_DEFAULT_PASS=aligator3 \
+    -p 4369:4369 \
+    -p 5671:5671 \
+    -p 5672:5672 \
+    -p 15671:15671 \
+    -p 15691-15692:15691-15692 \
+    -p 25672:25672 \
+    -p 15672:15672 --network main_net  rabbitmq:3-management`}/>
     <p>
         Then, you can also setup a reverse proxy and use a domain name to access the RabbitMQ management UI. This is my
         nginx config (relevant part only):
