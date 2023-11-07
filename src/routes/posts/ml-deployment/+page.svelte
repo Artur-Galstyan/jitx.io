@@ -453,4 +453,9 @@ docker run -d --hostname my-rabbit --name some-rabbit \
         we will also add a webhook, so that the user gets notified when the inference is done. But if you don't need
         that or you already know how to do that part, you can stop here. Otherwise, let's continue!
     </p>
+    <p>
+        Our dataset were 28x28 pixels of grayscale images. In other words, we need a 28x28 grid, where the user can
+        hover over the cells and draw a digit. The specifics aren't all that important, but if you're interested, you
+        can unfold the following section to see that part in action.
+    </p>
 </section>
