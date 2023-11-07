@@ -32,8 +32,9 @@
     <h3>What is Celery and RabbitMQ?</h3>
     <p>
         Celery is a task queue. In simple terms, it just receives notifications that a task has been requested and puts
-        those in a queue. It doesn't perform those tasks itself, but rather sends them to a Celery worker using <i>messages</i>.
-        When we refer to <i>Celery</i> we mean the "Celery App", which is running in tandem with our FastAPI app.
+        those in a queue. It doesn't perform those tasks itself, but rather puts those tasks in a queue (using
+        the message broker), so that
+        something else can perform those tasks (i.e. the worker).
     </p>
     <p>
         RabbitMQ is a message broker. Whenever Celery gets notified about a new task, it uses a message broker (such as
