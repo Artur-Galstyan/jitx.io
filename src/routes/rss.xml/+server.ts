@@ -20,7 +20,7 @@ export const GET = (async ({ request, fetch }) => {
     <title>JITx.io</title>
     <link>https://jitx.io</link>
     <description>AI and SE Projects by Artur A. Galstyan</description> 
-    <atom:link href="https://jitx.io/rss.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="https://www.jitx.io/rss.xml" rel="self" type="application/rss+xml"/>
     ${posts
       .map(
         (post) => `
@@ -29,7 +29,7 @@ export const GET = (async ({ request, fetch }) => {
       <link>https://jitx.io/posts/${post.slug}</link>
       <description>${post.shortDescription}</description> 
       <pubDate>${post.updatedAt.toUTCString()}</pubDate>
-      <author>Artur A. Galstyan</author>
+      <author>mail@arturgalstyan.dev</author>
       <guid isPermaLink="true">https://jitx.io/posts/${post.slug}</guid>
     </item>
 `
