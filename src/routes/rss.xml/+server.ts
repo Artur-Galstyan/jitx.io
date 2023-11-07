@@ -16,22 +16,21 @@ export const GET = (async ({ request, fetch }) => {
   const xml = `
     <?xml version="1.0" encoding="UTF-8" ?>
     <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom> 
-  <title>JITx</title>
-  <link>https://jitx.io</link>
-  <description>AI and SE by Artur A. Galstyan</description>
-     
     <channel>
+    <title>JITx.io</title>
+    <link>https://jitx.io</link>
+    <description>AI and SE Projects by Artur A. Galstyan</description> 
     <atom:link href="/rss.xml" rel="self" type="application/rss+xml"/>
     ${posts
       .map((post) => {
         `
         <item>
-        <title>${post.title}</title>
-        <link>https://jitx.io/posts/${post.slug}</link>
-        <description>${post.shortDescription}</description> 
-        <pubDate>${post.updatedAt}</pubDate>
-        <author>Artur A. Galstyan</author>
-        <guid>https://jitx.io/posts/${post.slug}</guid>
+          <title>${post.title}</title>
+          <link>https://jitx.io/posts/${post.slug}</link>
+          <description>${post.shortDescription}</description> 
+          <pubDate>${post.updatedAt}</pubDate>
+          <author>Artur A. Galstyan</author>
+          <guid isPermaLink="true">https://jitx.io/posts/${post.slug}</guid>
         </item>
        `;
       })
