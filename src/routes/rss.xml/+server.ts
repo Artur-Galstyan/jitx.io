@@ -29,7 +29,7 @@ export const GET = (async ({ request, fetch }) => {
       <link>https://jitx.io/posts/${post.slug}</link>
       <description>${post.shortDescription}</description> 
       <pubDate>${post.updatedAt.toUTCString()}</pubDate>
-      <author>mail@arturgalstyan.dev</author>
+      <author>mail@arturgalstyan.dev (Artur A. Galstyan)</author>
       <guid isPermaLink="true">https://jitx.io/posts/${post.slug}</guid>
     </item>
 `
