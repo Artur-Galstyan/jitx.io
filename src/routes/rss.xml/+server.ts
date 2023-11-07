@@ -28,7 +28,7 @@ export const GET = (async ({ request, fetch }) => {
           <title>${post.title}</title>
           <link>https://jitx.io/posts/${post.slug}</link>
           <description>${post.shortDescription}</description> 
-          <pubDate>${post.updatedAt}</pubDate>
+          <pubDate>${post.updatedAt.toUTCString()}</pubDate>
           <author>Artur A. Galstyan</author>
           <guid isPermaLink="true">https://jitx.io/posts/${post.slug}</guid>
         </item>
