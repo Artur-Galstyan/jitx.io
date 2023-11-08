@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { invalidateAll } from "$app/navigation";
-    import { page } from "$app/stores";
+    import {invalidateAll} from "$app/navigation";
+    import {page} from "$app/stores";
     import CommentSectionEditor from "$lib/components/CommentSectionEditor.svelte";
-    import { currentUser } from "$lib/state/currentUser";
-    import { errorToast } from "$lib/utils/notifications";
-    import { toggleModal } from "$lib/utils/utils";
+    import {currentUser} from "$lib/state/currentUser";
+    import {errorToast} from "$lib/utils/notifications";
+    import {toggleModal} from "$lib/utils/utils";
     import VscSmiley from "svelte-icons-pack/vsc/VscSmiley";
     import Icon from "svelte-icons-pack";
 
-    import { COMMENTS_PER_PAGE } from "$lib/utils/constants";
+    import {COMMENTS_PER_PAGE} from "$lib/utils/constants";
 
     let commentToDelete: any = null;
     let moreComments: any[] = [];
@@ -71,37 +71,43 @@
     }
 </script>
 
-<div class="divider" />
-<CommentSectionEditor />
+<div class="divider"/>
+<CommentSectionEditor/>
 {#if $page.data.comments.length === 0}
     <div class="text-center text-gray-400">No comments yet</div>
 {:else}
     <div class="">
         {#each $page.data.comments.concat(moreComments) as comment}
             <div
-                class="flex flex-col border border-solid border-gray-400 p-4 my-2"
+                    class="flex flex-col border border-solid border-gray-400 p-4 my-2"
             >
                 <div class="flex justify-between">
                     <div class="text-gray-400 text-sm flex space-x-2">
                         <div class="avatar">
                             <div class="w-8 rounded">
-                                <img
-                                    src={comment.User.image}
-                                    alt="Tailwind-CSS-Avatar-component"
-                                />
+                                {#if comment.User.image === null}
+                                    <div class="rounded-full w-8 h-8 bg-gray-400"></div>
+                                {:else}
+                                    <img
+                                            src={comment.User.image}
+                                            alt="Tailwind-CSS-Avatar-component"
+                                    />
+                                {/if}
+
                             </div>
                         </div>
                         <div class="my-auto">
-                            {comment.User.name} - {new Date(
-                                comment.createdAt
-                            ).toLocaleString()}
+
+                            {comment.User.username} - {new Date(
+                            comment.createdAt
+                        ).toLocaleString()}
                         </div>
                     </div>
                     <div class="text-gray-400">
                         {#if $currentUser?.id === comment.User.id}
                             <button
-                                class="btn btn-xs btn-error"
-                                on:click={async () => {
+                                    class="btn btn-xs btn-error"
+                                    on:click={async () => {
                                     commentToDelete = comment;
                                     toggleModal("are-you-sure-delete");
                                 }}
@@ -119,23 +125,25 @@
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <!-- svelte-ignore a11y-label-has-associated-control -->
                         <label tabindex="0" class="btn btn-xs btn-outline"
-                            ><Icon src={VscSmiley} /></label
+                        >
+                            <Icon src={VscSmiley}/>
+                        </label
                         >
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div
-                            tabindex="0"
-                            class="dropdown-content z-[1] p-2 shadow bg-base-100 rounded-box flex space-x-2"
+                                tabindex="0"
+                                class="dropdown-content z-[1] p-2 shadow bg-base-100 rounded-box flex space-x-2"
                         >
                             {#each reactions as reaction}
                                 <button
-                                    on:click={async () => {
+                                        on:click={async () => {
                                         await submitReaction(
                                             reaction,
                                             comment.id
                                         );
                                     }}
-                                    class="btn btn-xs btn-ghost"
-                                    >{reaction.emoji}</button
+                                        class="btn btn-xs btn-ghost"
+                                >{reaction.emoji}</button
                                 >
                             {/each}
                         </div>
@@ -144,13 +152,13 @@
                         {#each reactions as reaction}
                             {#if comment.Reactions.filter((r) => r.type === reaction.vote).length > 0}
                                 <button
-                                    on:click={async () => {
+                                        on:click={async () => {
                                         await submitReaction(
                                             reaction,
                                             comment.id
                                         );
                                     }}
-                                    class="btn btn-xs btn-outline mx-2"
+                                        class="btn btn-xs btn-outline mx-2"
                                 >
                                     {comment.Reactions.filter(
                                         (r) => r.type === reaction.vote
@@ -166,7 +174,7 @@
         {#if $page.data.comments.concat(moreComments).length < COMMENTS_PER_PAGE * $page.data.totalPages}
             <div class="flex justify-center">
                 <button
-                    on:click={async () => {
+                        on:click={async () => {
                         let loadedComments = await fetch(
                             "/api/comments?postId=" +
                                 $page.data.post.id +
@@ -182,7 +190,7 @@
                             currentPage++;
                         }
                     }}
-                    class="btn"
+                        class="btn"
                 >
                     Load more
                 </button>
@@ -197,7 +205,7 @@
 
         <div class="modal-action">
             <button
-                on:click={async (e) => {
+                    on:click={async (e) => {
                     if (!commentToDelete) return;
                     let req = await fetch("/api/comments", {
                         method: "DELETE",
@@ -218,7 +226,8 @@
                         toggleModal("are-you-sure-delete");
                     }
                 }}
-                class="btn btn-primary">Yes</button
+                    class="btn btn-primary">Yes
+            </button
             >
             <button class="btn btn-outline">No</button>
         </div>

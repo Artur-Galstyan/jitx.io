@@ -1,17 +1,17 @@
 <script lang="ts">
     import Navbar from "$lib/components/Navbar.svelte";
     import "../app.css";
-    import { dev } from "$app/environment";
-    import { inject } from "@vercel/analytics";
-    import { currentUser } from "$lib/state/currentUser";
-    import { page } from "$app/stores";
+    import {dev} from "$app/environment";
+    import {inject} from "@vercel/analytics";
+    import {currentUser} from "$lib/state/currentUser";
+    import {page} from "$app/stores";
     import LoginDialog from "$lib/components/LoginDialog.svelte";
     import "@fontsource/fira-code";
     import "@fontsource/fira-code/700.css";
     import "@fontsource/ubuntu"; // Defaults to weight 400
     import "@fontsource/ubuntu/700.css"; // Defaults to weight 400
-    import { onNavigate } from "$app/navigation";
-    import { transisting } from "$lib/state/transisting";
+    import {onNavigate} from "$app/navigation";
+    import {transisting} from "$lib/state/transisting";
     import Footer from "$lib/components/Footer.svelte";
 
     onNavigate((navigation) => {
@@ -26,9 +26,10 @@
         });
     });
 
-    inject({ mode: dev ? "development" : "production" });
+    inject({mode: dev ? "development" : "production"});
 
     $currentUser = $page.data.session?.user;
+   
 </script>
 
 <svelte:head>
@@ -36,11 +37,11 @@
     <script defer src="https://www.google.com/recaptcha/api.js"></script>
 </svelte:head>
 <main class="mx-auto flex flex-col">
-    <Navbar />
+    <Navbar/>
     <div class="md:w-[90%] lg:w-[80%] xl:w-[70%] 2xl:w-[60%] md:mx-auto flex-1">
-        <slot />
+        <slot/>
     </div>
-    <Footer />
+    <Footer/>
 </main>
 
-<LoginDialog />
+<LoginDialog/>

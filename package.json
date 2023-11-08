@@ -33,6 +33,8 @@
     "@auth/sveltekit": "^0.3.11",
     "@fontsource/fira-code": "^5.0.15",
     "@fontsource/ubuntu": "^5.0.8",
+    "@lucia-auth/adapter-prisma": "^3.0.2",
+    "@lucia-auth/oauth": "^3.4.0",
     "@prisma/client": "^5.5.2",
     "@tailwindcss/nesting": "^0.0.0-insiders.565cd3e",
     "@tiptap/core": "^2.1.12",
@@ -44,6 +46,7 @@
     "fuse.js": "^7.0.0",
     "highlight.js": "^11.9.0",
     "katex": "^0.16.9",
+    "lucia": "^2.7.3",
     "svelte-highlight": "^7.4.1",
     "svelte-icons-pack": "^2.1.0",
     "sweetalert2": "^11.9.0"
