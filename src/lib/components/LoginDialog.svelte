@@ -49,7 +49,7 @@
                     </button>
                     <button
                             on:click={async () => {
-                               await goto("/login/discord")
+                               await goto("/login/apple")
                         }}
                             class="btn btn-ghost"
                     >
