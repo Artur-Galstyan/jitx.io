@@ -2,7 +2,9 @@ import { appleAuth, auth } from "$lib/server/lucia.server";
 import { OAuthRequestError } from "@lucia-auth/oauth";
 import type { RequestHandler } from "@sveltejs/kit";
 
-export const POST = (async ({ url, locals, cookies }) => {
+export const POST = (async ({ request, url, locals, cookies }) => {
+  console.log("Apple callback", url.searchParams);
+  console.log("Apple request", request);
   const code = url.searchParams.get("code");
 
   // validate state
