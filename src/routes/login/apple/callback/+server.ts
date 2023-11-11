@@ -5,11 +5,10 @@ import type { RequestHandler } from "@sveltejs/kit";
 export const POST = (async ({ url, locals, cookies }) => {
   const storedState = cookies.get("apple_oauth_state");
 
-  const state = url.searchParams.get("state");
   const code = url.searchParams.get("code");
 
   // validate state
-  if (!storedState || !state || storedState !== state || !code) {
+  if (!storedState || !code) {
     console.log("Error in apple callback");
     return new Response(null, {
       status: 400,

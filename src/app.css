@@ -12,12 +12,15 @@
     a {
         @apply link text-blue-400;
     }
+
     .header-text {
         @apply cubano !important;
     }
+
     ul {
         @apply list-disc w-3/4 mx-auto text-justify;
     }
+
     p {
         @apply text-justify my-2 leading-relaxed;
     }
@@ -46,14 +49,21 @@
     article {
         /* font-family: "Fira Code"; */
     }
+
     .card-title {
         font-family: "Fira Code";
         font-weight: 700;
     }
+
     body {
         font-family: "Ubuntu";
     }
+
+    code {
+        @apply scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-slate-300 ;
+    }
 }
+
 .ProseMirror:focus {
     outline: none;
 }
@@ -62,10 +72,12 @@
     > * + * {
         margin-top: 0.75em;
     }
+
     hr {
         margin-top: 0.25em;
         margin-bottom: 0.25em;
     }
+
     ul,
     ol {
         padding: 0 1rem;
@@ -109,10 +121,12 @@
         padding-left: 1rem;
         border-left: 2px solid rgba(#0d0d0d, 0.1);
     }
+
     p {
         margin: 0 !important;
     }
 }
+
 .tiptap p.is-editor-empty:first-child::before {
     color: #adb5bd;
     content: attr(data-placeholder);
@@ -124,6 +138,7 @@
 .grecaptcha-badge {
     visibility: hidden;
 }
+
 .katex-html {
     padding: 3px;
 }

@@ -49,6 +49,7 @@
     "lucia": "^2.7.3",
     "svelte-highlight": "^7.4.1",
     "svelte-icons-pack": "^2.1.0",
-    "sweetalert2": "^11.9.0"
+    "sweetalert2": "^11.9.0",
+    "tailwind-scrollbar": "^3.0.5"
   }
 }
