@@ -3,13 +3,11 @@ import { OAuthRequestError } from "@lucia-auth/oauth";
 import type { RequestHandler } from "@sveltejs/kit";
 
 export const POST = (async ({ url, locals, cookies }) => {
-  const storedState = cookies.get("apple_oauth_state");
-
   const code = url.searchParams.get("code");
 
   // validate state
-  if (!storedState || !code) {
-    console.log("Error in apple callback");
+  if (!code) {
+    console.log("Error in apple callback, no code");
     return new Response(null, {
       status: 400,
     });
