@@ -4,7 +4,8 @@ import type { RequestHandler } from "@sveltejs/kit";
 
 export const POST = (async ({ request, url, locals, cookies }) => {
   console.log("Apple callback", url.searchParams);
-  console.log("Apple request", request);
+  console.log("Apple request text", await request.text());
+  console.log("Apple request body", await request.json());
   const code = url.searchParams.get("code");
 
   // validate state

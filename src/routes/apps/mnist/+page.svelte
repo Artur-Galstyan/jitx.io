@@ -1,17 +1,66 @@
 <script lang="ts">
+    import {onDestroy, onMount} from "svelte";
+
   let gridSize = 28;
   let grid = Array(gridSize).fill(0).map(() => Array(gridSize).fill(0));
   let isMouseDown = false;
 
-  function handleMouseDown() {
-    isMouseDown = true;
-  }
+  let prediction: number = -1;
+  let websocket: WebSocket;
+  let randomUserId = String(Math.floor(Math.random() * 1000000)) + "user";
+    function clearGrid() {
+        grid = Array(gridSize).fill(0).map(() => Array(gridSize).fill(0));
+    }
 
-  function handleMouseUp() {
-    isMouseDown = false;
-  }
+    let predictInterval: any;
+    onMount(() => {
+        // predictInterval = setInterval(async () => {
+        //     await predict();
+        // }, 1000)
+        websocket = new WebSocket("wss://mnist.api.jitx.io/ws/" + randomUserId);
+        websocket.onopen = () => {
+            console.log("opened")
+        }
+        websocket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log(data)
+            if (data.type === "prediction") {
+                prediction = data.prediction;
+            }
+        }
+    })
 
-   function darkenCell(row, col) {
+    onDestroy(() => {
+        clearInterval(predictInterval);
+    })
+
+    async function predict() {
+        let gridArrayFlattened = grid.flat();
+        console.log(gridArrayFlattened)
+        let req = await fetch("https://mnist.api.jitx.io/predict", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+               array: gridArrayFlattened,
+               user_id: randomUserId
+            })
+        })
+
+        let res = await req.json();
+        console.log(res)
+    }
+
+    function handleMouseDown() {
+        isMouseDown = true;
+    }
+
+    function handleMouseUp() {
+        isMouseDown = false;
+    }
+
+   function darkenCell(row: number, col: number) {
     if (isMouseDown) {
       // Darken the clicked cell
       grid[row][col] = Math.min(grid[row][col] + 2, 10); // increment, but cap the value
@@ -53,20 +102,36 @@
 </style>
 
 <div class="mnist-grid w-[400px] md:w-[600px] mx-auto"
+     on:touchstart={handleMouseDown}
+     on:touchend={handleMouseUp}
      on:mousedown={handleMouseDown}
      on:mouseup={handleMouseUp}>
     {#each grid as row, rowIndex}
         {#each row as cell, colIndex}
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <!-- svelte-ignore a11y-mouse-events-have-key-events -->
             <div class="cell h-[14.28px] md:h-[21.42px] "
-                 style="background-color: hsl(0, 0%, {100 - cell * 15}%)"
+                 style="background-color: hsl(0, 0%, {100 - cell * 25}%)"
                  on:mouseenter={() => darkenCell(rowIndex, colIndex)}
                  on:touchmove={() => darkenCell(rowIndex, colIndex)}
-                 on:touchstart={() => darkenCell(rowIndex, colIndex)}
-
             >
             </div>
         {/each}
     {/each}
 </div>
+<div class="flex justify-center my-8 space-x-4">
+    <button
+           on:click={clearGrid}
+            class="btn btn-secondary">
+        Clear
+    </button>
+    <button
+            on:click={predict}
+    class="btn btn-primary"
+    >
+        Predict
+    </button>
+</div>
+{#if prediction !== -1}
+    <div class="text-center">
+        Prediction {prediction}
+    </div>
+{/if}
