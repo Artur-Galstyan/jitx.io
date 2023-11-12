@@ -421,7 +421,7 @@ docker run -d --hostname my-rabbit --name some-rabbit \
 
                     location / {
                             proxy_pass http://rabbitmq_management; # This must match the upstream name
-                                    proxy_set_header Host $http_host;
+                            proxy_set_header Host $http_host;
                             proxy_set_header X-Real-IP $remote_addr;
                             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                             proxy_set_header X-Forwarded-Proto $scheme;
@@ -458,4 +458,363 @@ docker run -d --hostname my-rabbit --name some-rabbit \
         hover over the cells and draw a digit. The specifics aren't all that important, but if you're interested, you
         can unfold the following section to see that part in action.
     </p>
+    <div class="collapse border-accent border border-opacity-50">
+        <input type="checkbox"/>
+        <div class="collapse-title text-xl font-medium">
+            The Drawing App
+        </div>
+        <div class="collapse-content overflow-scroll">
+<pre class="code">
+    <code class="language-javascript">
+        {`
+<script lang="ts">
+    import {onDestroy, onMount} from "svelte";
+
+    let websocketUrl = "wss://api.jitx.io/ws/"
+    let apiUrl = "https://api.jitx.io/predict"
+
+    let gridSize = 28;
+    let grid = Array(gridSize).fill(0).map(() => Array(gridSize).fill(0));
+    let isMouseDown = false;
+
+    let prediction: number = -1;
+    let websocket: WebSocket;
+    let randomUserId = String(Math.floor(Math.random() * 1000000)) + "user";
+    function clearGrid() {
+        grid = Array(gridSize).fill(0).map(() => Array(gridSize).fill(0));
+    }
+
+    let predictInterval: any;
+    onMount(() => {
+        // predictInterval = setInterval(async () => {
+        //     await predict();
+        // }, 1000)
+        console.log("userId", randomUserId)
+        websocket = new WebSocket(websocketUrl + randomUserId);
+        websocket.onopen = () => {
+            console.log("opened")
+        }
+        websocket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log(data)
+            if (data.type === "prediction") {
+                prediction = data.prediction;
+            }
+        }
+    })
+
+    onDestroy(() => {
+        clearInterval(predictInterval);
+    })
+
+    async function predict() {
+        let gridArrayFlattened = grid.flat();
+        console.log(gridArrayFlattened)
+        let req = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                array: gridArrayFlattened,
+                user_id: randomUserId
+            })
+        })
+
+        let res = await req.json();
+        console.log(res)
+    }
+
+    function handleMouseDown() {
+        isMouseDown = true;
+    }
+
+    function handleMouseUp() {
+        isMouseDown = false;
+    }
+
+    function darkenCell(row: number, col: number) {
+        if (isMouseDown) {
+            // Darken the clicked cell
+            grid[row][col] = Math.min(grid[row][col] + 2, 10); // increment, but cap the value
+
+            // Update the neighbors
+            const neighborOffsets = [-1, 0, 1];
+            neighborOffsets.forEach((dx) => {
+                neighborOffsets.forEach((dy) => {
+                    if (dx === 0 && dy === 0) {
+                        // Skip the main cell
+                        return;
+                    }
+                    const newRow = row + dx;
+                    const newCol = col + dy;
+                    // Check if the new indices are within the bounds of the grid
+                    if (newRow >= 0 && newRow < gridSize && newCol >= 0 && newCol < gridSize) {
+                        // Darken the neighboring cell to a lesser degree
+                        grid[newRow][newCol] = Math.min(grid[newRow][newCol] + 1, 10);
+                    }
+                });
+            });
+        }
+    }
+</script>
+
+<style>
+    .mnist-grid{
+        display: grid;
+        grid-template-columns: repeat(28, auto);
+        grid-template-rows: repeat(28, auto);
+        column-gap: 0 !important;
+        row-gap: 0 !important;
+    }
+    .cell {
+        border: 1px solid lightgray;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+</style>
+
+<div class="mnist-grid w-[400px] md:w-[600px] mx-auto"
+     on:touchstart={handleMouseDown}
+     on:touchend={handleMouseUp}
+     on:mousedown={handleMouseDown}
+     on:mouseup={handleMouseUp}>
+    {#each grid as row, rowIndex}
+        {#each row as cell, colIndex}
+            <div class="cell h-[14.28px] md:h-[21.42px] "
+                 style="background-color: hsl(0, 0%, {100 - cell * 25}%)"
+                 on:mouseenter={() => darkenCell(rowIndex, colIndex)}
+                 on:touchmove={() => darkenCell(rowIndex, colIndex)}
+            >
+            </div>
+        {/each}
+    {/each}
+</div>
+<div class="flex justify-center my-8 space-x-4">
+    <button
+            on:click={clearGrid}
+            class="btn btn-secondary">
+        Clear
+    </button>
+    <button
+            on:click={predict}
+            class="btn btn-primary"
+    >
+        Predict
+    </button>
+</div>
+{#if prediction !== -1}
+    <div class="text-center">
+        Prediction {prediction}
+    </div>
+{/if}
+        `}
+    </code>
+</pre>
+        </div>
+    </div>
+    <div>
+        And this is what the <a class="link" href="/apps/mnist">app</a> looks like:
+        <Figure path="app.webp" caption="The app" width={600}/>
+    </div>
+    <p>
+        If you checked the code, you will notice that I built in a websocket, which is used to send the prediction back
+        from the server to the client in real time. Similarly, I added this part to the FastAPI code as well.
+        Furthermore,
+        we now have a webhook too. So, when the inference is done, the Celery worker makes a post request to our FastAPI
+        app, which in turn
+        sends a websocket message to the user and the user gets notified that the inference is done.
+    </p>
+    <p>
+        Here's the final FastAPI code:
+    </p>
+    <CodeBox filename="main.py" language="python" code={`
+import json
+from typing import List
+
+import uvicorn
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from icecream import ic
+from pydantic import BaseModel
+from starlette.middleware.cors import CORSMiddleware
+
+from mnist_cnn.worker import celery, predict_number
+
+
+app = FastAPI()
+app.celery_app = celery
+all_active_connections = {}
+task_id_to_user_id = {}
+
+
+async def connect(active_connections: dict, websocket: WebSocket, user_id: str):
+    await websocket.accept()
+    if user_id not in active_connections:
+        active_connections[user_id] = {}
+    active_connections[user_id] = websocket
+
+
+async def disconnect(active_connections: dict, websocket: WebSocket, user_id: str):
+    try:
+        await websocket.close()
+    except Exception as _:
+        ic("Websocket already closed")
+    del active_connections[user_id]
+
+
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str):
+    await connect(all_active_connections, websocket, user_id)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ic(f"Websocket closed for user {user_id}")
+        await disconnect(all_active_connections, websocket, user_id)
+
+
+class PredictionRequest(BaseModel):
+    array: List[int]
+    user_id: str
+
+
+class PredictionResponse(BaseModel):
+    prediction: int
+    task_id: str
+
+
+@app.post("/predict")
+async def make_prediction(prediction_request: PredictionRequest):
+    async_res = predict_number.delay(prediction_request.array)
+    task_id_to_user_id[async_res.id] = prediction_request.user_id
+    return async_res.id
+
+
+@app.get("/predict/{task_id}")
+async def get_prediction(task_id: str):
+    task_result = celery.AsyncResult(task_id)
+    return task_result.status
+
+
+@app.post("/predict/webhook")
+async def task_webhook(prediction_response: PredictionResponse):
+    try:
+        task_result = celery.AsyncResult(prediction_response.task_id)
+        user_id = task_id_to_user_id[prediction_response.task_id]
+        await all_active_connections[user_id].send_text(
+            json.dumps({"type": "prediction", "prediction": task_result.get()})
+        )
+        # remove task id from dict
+        del task_id_to_user_id[prediction_response.task_id]
+        return task_result.status
+    except Exception as e:
+        ic(e)
+        return "Error, " + str(e)
+
+
+middleware = CORSMiddleware(
+    app=app,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+def start():
+    uvicorn.run("mnist_cnn.main:app", host="0.0.0.0", port=8004, reload=False)
+    `}/>
+
+    <p>
+        And here's the final worker code:
+    </p>
+    <CodeBox filename="worker.py" language="python" code={`
+import logging
+import os
+import pathlib
+
+import equinox as eqx
+import jax.numpy as jnp
+import matplotlib
+import requests
+from celery import Celery
+from celery.signals import celeryd_init, task_success, task_postrun
+from dotenv import load_dotenv
+
+from mnist_cnn.cnn.model.model import Model
+
+logger = logging.getLogger(__name__)
+load_dotenv()
+
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND")
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+FASTAPI_URL = os.environ.get("FASTAPI_URL")
+
+assert CELERY_BROKER_URL is not None, "Celery broker URL not set"
+assert FASTAPI_URL is not None, "FastAPI URL not set"
+assert CELERY_RESULT_BACKEND is not None, "Celery result backend not set"
+
+
+celery = Celery(__name__, broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
+celery.conf.update(broker_connection_retry_on_startup=True)
+model: Model | None = None
+
+
+@celeryd_init.connect
+def init_celery(**kwargs):
+    print("Initializing celery...")
+    print("Loading model")
+    global model
+    model_dir = pathlib.Path(__name__).parent.absolute() / "mnist_cnn/models/model.eqx"
+    init_model = Model()
+    try:
+        model = eqx.tree_deserialise_leaves(model_dir, init_model)
+    except Exception as e:
+        print("Model loading failed", e)
+    print("Model loaded")
+
+
+@task_postrun.connect
+def task_postrun_handler(
+    task_id,
+    task,
+    retval,
+    state,
+    **kwargs,
+):
+    logger.info(f"Task {task_id} succeeded; sending webhook")
+    req = requests.post(
+        f"{FASTAPI_URL}/predict/webhook",
+        headers={"Content-Type": "application/json"},
+        json={"prediction": retval, "task_id": task_id},
+    )
+    if req.status_code != 200:
+        logger.error(
+            f"Failed to send webhook for task {task_id}, got {req.status_code}"
+        )
+    else:
+        logger.info(f"Webhook sent for task {task_id}")
+
+
+@celery.task(name="predict_number")
+def predict_number(array: list):
+    global model
+    if not model:
+        raise Exception("Model not loaded")
+    array = jnp.array(array, dtype=float).reshape(1, 28, 28)
+    prediction = jnp.argmax(model(array, key=None))
+    return int(prediction)
+`}/>
+    <p>
+        Notice, how we used Celery signals to send a webhook to our FastAPI app once the task is done. This is
+        important, because otherwise, the user would have to constantly poll the status of the task, which is
+        inefficient.
+    </p>
 </section>
+<p>
+    Alright, with this knowledge, you should be able to deploy your own ML models using Celery, RabbitMQ and FastAPI.
+    If you have any questions, feel free to ask them in the comments below.
+</p>
+<p>
+    Thanks for reading!
+</p>

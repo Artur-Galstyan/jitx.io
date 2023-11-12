@@ -3,6 +3,7 @@
     import c from "highlight.js/lib/languages/c";
     import nginx from "highlight.js/lib/languages/nginx";
     import bash from "highlight.js/lib/languages/bash";
+    import javascript from "highlight.js/lib/languages/javascript";
     import hljs from "highlight.js";
     import {onMount} from "svelte";
     import type {Post} from "@prisma/client";
@@ -17,6 +18,7 @@
     hljs.registerLanguage("c", c);
     hljs.registerLanguage("nginx", nginx);
     hljs.registerLanguage("bash", bash);
+    hljs.registerLanguage("svelte", javascript);
     const post: Post = $page.data.post;
 
     onMount(() => {

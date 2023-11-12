@@ -1,13 +1,16 @@
 <script lang="ts">
     import {onDestroy, onMount} from "svelte";
 
-  let gridSize = 28;
-  let grid = Array(gridSize).fill(0).map(() => Array(gridSize).fill(0));
-  let isMouseDown = false;
+    let websocketUrl = "wss://api.jitx.io/ws/"
+    let apiUrl = "https://api.jitx.io/predict"
 
-  let prediction: number = -1;
-  let websocket: WebSocket;
-  let randomUserId = String(Math.floor(Math.random() * 1000000)) + "user";
+    let gridSize = 28;
+    let grid = Array(gridSize).fill(0).map(() => Array(gridSize).fill(0));
+    let isMouseDown = false;
+
+    let prediction: number = -1;
+    let websocket: WebSocket;
+    let randomUserId = String(Math.floor(Math.random() * 1000000)) + "user";
     function clearGrid() {
         grid = Array(gridSize).fill(0).map(() => Array(gridSize).fill(0));
     }
@@ -17,7 +20,8 @@
         // predictInterval = setInterval(async () => {
         //     await predict();
         // }, 1000)
-        websocket = new WebSocket("wss://mnist.api.jitx.io/ws/" + randomUserId);
+        console.log("userId", randomUserId)
+        websocket = new WebSocket(websocketUrl + randomUserId);
         websocket.onopen = () => {
             console.log("opened")
         }
@@ -37,14 +41,14 @@
     async function predict() {
         let gridArrayFlattened = grid.flat();
         console.log(gridArrayFlattened)
-        let req = await fetch("https://mnist.api.jitx.io/predict", {
+        let req = await fetch(apiUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-               array: gridArrayFlattened,
-               user_id: randomUserId
+                array: gridArrayFlattened,
+                user_id: randomUserId
             })
         })
 
@@ -60,30 +64,30 @@
         isMouseDown = false;
     }
 
-   function darkenCell(row: number, col: number) {
-    if (isMouseDown) {
-      // Darken the clicked cell
-      grid[row][col] = Math.min(grid[row][col] + 2, 10); // increment, but cap the value
+    function darkenCell(row: number, col: number) {
+        if (isMouseDown) {
+            // Darken the clicked cell
+            grid[row][col] = Math.min(grid[row][col] + 2, 10); // increment, but cap the value
 
-      // Update the neighbors
-      const neighborOffsets = [-1, 0, 1];
-      neighborOffsets.forEach((dx) => {
-        neighborOffsets.forEach((dy) => {
-          if (dx === 0 && dy === 0) {
-            // Skip the main cell
-            return;
-          }
-          const newRow = row + dx;
-          const newCol = col + dy;
-          // Check if the new indices are within the bounds of the grid
-          if (newRow >= 0 && newRow < gridSize && newCol >= 0 && newCol < gridSize) {
-            // Darken the neighboring cell to a lesser degree
-            grid[newRow][newCol] = Math.min(grid[newRow][newCol] + 1, 10);
-          }
-        });
-      });
+            // Update the neighbors
+            const neighborOffsets = [-1, 0, 1];
+            neighborOffsets.forEach((dx) => {
+                neighborOffsets.forEach((dy) => {
+                    if (dx === 0 && dy === 0) {
+                        // Skip the main cell
+                        return;
+                    }
+                    const newRow = row + dx;
+                    const newCol = col + dy;
+                    // Check if the new indices are within the bounds of the grid
+                    if (newRow >= 0 && newRow < gridSize && newCol >= 0 && newCol < gridSize) {
+                        // Darken the neighboring cell to a lesser degree
+                        grid[newRow][newCol] = Math.min(grid[newRow][newCol] + 1, 10);
+                    }
+                });
+            });
+        }
     }
-  }
 </script>
 
 <style>
@@ -94,11 +98,11 @@
         column-gap: 0 !important;
         row-gap: 0 !important;
     }
-  .cell {
-    border: 1px solid lightgray;
-      margin: 0 !important;
-      padding: 0 !important;
-  }
+    .cell {
+        border: 1px solid lightgray;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 </style>
 
 <div class="mnist-grid w-[400px] md:w-[600px] mx-auto"
@@ -119,13 +123,13 @@
 </div>
 <div class="flex justify-center my-8 space-x-4">
     <button
-           on:click={clearGrid}
+            on:click={clearGrid}
             class="btn btn-secondary">
         Clear
     </button>
     <button
             on:click={predict}
-    class="btn btn-primary"
+            class="btn btn-primary"
     >
         Predict
     </button>
