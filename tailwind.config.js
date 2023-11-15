@@ -10,23 +10,6 @@ export default {
     require("tailwind-scrollbar"),
   ],
   daisyui: {
-    themes: [
-      {
-        emerald: {
-          ...require("daisyui/src/theming/themes")["[data-theme=emerald]"],
-          pre: {
-            padding: 2,
-          },
-        },
-      },
-      {
-        dracula: {
-          ...require("daisyui/src/theming/themes")["[data-theme=dracula]"],
-          pre: {
-            padding: 2,
-          },
-        },
-      },
-    ],
+    themes: ["dracula"],
   },
 };

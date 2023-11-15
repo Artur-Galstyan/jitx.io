@@ -1,4 +1,4 @@
-import type { User } from "@prisma/client";
 import { writable } from "svelte/store";
+import type { User } from "@prisma/client";
 
-export const currentUser = writable<User | undefined>(undefined);
+export const currentUser = writable<User | null>(null);

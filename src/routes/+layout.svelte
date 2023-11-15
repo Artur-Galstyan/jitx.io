@@ -10,10 +10,13 @@
     import "@fontsource/fira-code/700.css";
     import "@fontsource/ubuntu"; // Defaults to weight 400
     import "@fontsource/ubuntu/700.css"; // Defaults to weight 400
-    import {onNavigate} from "$app/navigation";
+    import {invalidate, onNavigate} from "$app/navigation";
     import {transisting} from "$lib/state/transisting";
     import Footer from "$lib/components/Footer.svelte";
+    import {onMount} from "svelte";
 
+
+    export let data
     onNavigate((navigation) => {
         if (!document.startViewTransition) return;
         $transisting = true;
@@ -28,8 +31,21 @@
 
     inject({mode: dev ? "development" : "production"});
 
+
+    const {supabase, session} = data
+    // $: ({ supabase, session } = data)
+
+    onMount(() => {
+        const {data} = supabase.auth.onAuthStateChange((event, _session) => {
+            if (_session?.expires_at !== session?.expires_at) {
+                invalidate('supabase:auth')
+                $currentUser = _session?.user;
+            }
+        })
+
+        return () => data.subscription.unsubscribe()
+    })
     $currentUser = $page.data.session?.user;
-   
 </script>
 
 <svelte:head>

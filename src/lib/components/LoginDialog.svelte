@@ -1,8 +1,7 @@
 <script lang="ts">
-
     import Icon from "svelte-icons-pack"
     import AiFillApple from "svelte-icons-pack/ai/AiFillApple";
-    import {goto} from "$app/navigation";
+    import {page} from "$app/stores";
 </script>
 
 <dialog id="loginDialogModal" class="modal">
@@ -13,7 +12,9 @@
                 <div class="flex flex-col justify-center space-y-4">
                     <button
                             on:click={async () => {
-                                await goto("/login/github");
+                                await $page.data.supabase.auth.signInWithOAuth({
+                                provider: 'github',
+                               })
                             }}
                             class="btn btn-ghost"
                     >
@@ -31,7 +32,9 @@
                     </button>
                     <button
                             on:click={async () => {
-                               await goto("/login/discord")
+                                await $page.data.supabase.auth.signInWithOAuth({
+                                provider: 'discord',
+                               })
                         }}
                             class="btn btn-ghost"
                     >
@@ -49,8 +52,10 @@
                     </button>
                     <button
                             on:click={async () => {
-                               await goto("/login/apple")
-                        }}
+                               await $page.data.supabase.auth.signInWithOAuth({
+                                provider: 'apple',
+                               })
+                            }}
                             class="btn btn-ghost"
                     >
                         <span class="">

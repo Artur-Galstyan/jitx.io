@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import HintBox from "$lib/components/HintBox.svelte";
     import Figure from "$lib/components/Figure.svelte";
     import CodeBox from "$lib/components/CodeBox.svelte";

@@ -1,11 +1,13 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearch"]
+  previewFeatures = ["fullTextSearch", "multiSchema"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["public", "auth"]
 }
 
 enum ReactionType {
@@ -16,6 +18,8 @@ enum ReactionType {
   HEART
   FIRE
   SAD
+
+  @@schema("public")
 }
 
 enum Status {
@@ -23,6 +27,8 @@ enum Status {
   PLANNED
   PUBLISHED
   HIDDEN
+
+  @@schema("public")
 }
 
 model Project {
@@ -32,6 +38,8 @@ model Project {
   name             String
   link             String
   shortDescription String?
+
+  @@schema("public")
 }
 
 model Post {
@@ -47,6 +55,8 @@ model Post {
   thumbnail            Boolean   @default(false)
   thumbnailDescription String?
   Comment              Comment[]
+
+  @@schema("public")
 }
 
 model Comment {
@@ -62,6 +72,8 @@ model Comment {
   Reactions Reaction[]
   User      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String?
+
+  @@schema("public")
 }
 
 model Reaction {
@@ -75,6 +87,8 @@ model Reaction {
   commentId String
   User      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String?
+
+  @@schema("public")
 }
 
 model User {
@@ -83,27 +97,8 @@ model User {
   email    String?
   image    String?
 
-  comments     Comment[]
-  reactions    Reaction[]
-  auth_session Session[]
-  key          Key[]
-}
+  comments  Comment[]
+  reactions Reaction[]
 
-model Session {
-  id             String @id @unique
-  user_id        String
-  active_expires BigInt
-  idle_expires   BigInt
-  user           User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
-
-  @@index([user_id])
-}
-
-model Key {
-  id              String  @id @unique
-  hashed_password String?
-  user_id         String
-  user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
-
-  @@index([user_id])
+  @@schema("auth") // or @@schema("public")
 }
