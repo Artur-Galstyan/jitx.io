@@ -2,6 +2,8 @@
     import Icon from "svelte-icons-pack"
     import AiFillApple from "svelte-icons-pack/ai/AiFillApple";
     import {page} from "$app/stores";
+    import BsDiscord from "svelte-icons-pack/bs/BsDiscord";
+    import AiOutlineGithub from "svelte-icons-pack/ai/AiOutlineGithub";
 </script>
 
 <dialog id="loginDialogModal" class="modal">
@@ -18,12 +20,8 @@
                             }}
                             class="btn btn-ghost"
                     >
-                        <span class="w-[4rem]">
-                            <img
-                                    class="mx-auto w-[46px]"
-                                    src="/buttons/github.svg"
-                                    alt="github Icon"
-                            />
+                        <span class="w-[4rem] mx-auto">
+                            <Icon src={AiOutlineGithub} size="48" color="white"></Icon>
                         </span>
 
                         <span class="w-[12rem] text-left">
@@ -38,12 +36,8 @@
                         }}
                             class="btn btn-ghost"
                     >
-                        <span class="w-[4rem]">
-                            <img
-                                    class="mx-auto"
-                                    src="/buttons/discord.svg"
-                                    alt="Discord Icon"
-                            />
+                        <span class="w-[4rem] mx-auto">
+                            <Icon src={BsDiscord} size="48" color="white"></Icon>
                         </span>
 
                         <span class="w-[12rem] text-left">
@@ -58,8 +52,8 @@
                             }}
                             class="btn btn-ghost"
                     >
-                        <span class="">
-                            <Icon src={AiFillApple} size="48"></Icon>
+                        <span class="w-[4rem] mx-auto">
+                            <Icon src={AiFillApple} color="white" size="48"></Icon>
                         </span>
 
                         <span class="w-[12rem] text-left">

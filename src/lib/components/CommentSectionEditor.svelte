@@ -93,15 +93,12 @@
         </button>
 
 
-        <form action="/?/logout" method="POST">
-            <button type="submit"
-                    on:click={() => {
-            }}
-                    class="btn btn-outline btn-xs my-auto">Sign Out
-            </button
-            >
-
-        </form>
+        <button type="submit"
+                on:click={async () => {
+                    await $page.data.supabase.auth.signOut();
+                }}
+                class="btn btn-outline btn-xs my-auto">Sign Out
+        </button>
     </div>
 {:else}
     <button
