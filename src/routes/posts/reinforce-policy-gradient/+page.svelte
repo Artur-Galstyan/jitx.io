@@ -127,6 +127,151 @@
         These trajectories are also called episodes and we will use these terms interchangeably. Trajectories or
         episodes are entities that can be sampled from the environment by interacting with it through the agent's
         policy. Mathematically, we can write the sampling process as:
-        <Katex math={`\\tau \\approx \\pi_{\\theta}`} displayMode={true}/>
+        <Katex math={`\\tau \\sim \\pi_{\\theta}`} displayMode={true}/>
     </p>
+    <p>
+        Let's say we have a policy
+        <Katex math={`\\pi`}/>
+        that we want to evaluate. Since what we have here is essentially a stochastic process, we can simply evaluate
+        the policy by sampling a large number of trajectories from the environment and then averaging the rewards of
+        these trajectories. We can then define the objective as the expected return over all trajectories:
+    </p>
+    <Katex math={`J(\\pi_{\\theta}) = \\mathbb{E}_{\\tau \\sim \\pi_{\\theta}} \\left[ R_t(\\tau) \\right] = \\mathbb{E}_{\\tau \\sim \\pi_{\\theta}} \\left[ \\sum_{i=0}^{T} \\gamma^i r_i \\right]
+`} displayMode={true}/>
+    <p>
+        Given the objective function, the goal can be stated as finding the set of parameters for the policy that
+        maximize the objective function, i.e. get's the highest expected reward:
+    </p>
+    <Katex math={`\\max_{\\theta} J(\\pi_{\\theta}) = \\mathbb{E}_{\\tau \\sim \\pi_{\\theta}} \\left[ R(\\tau) \\right]
+`} displayMode={true}/>
+</section>
+<section>
+    <h3>The Policy Gradient Theorem</h3>
+    <p>
+        Above, we have defined the objective function and the goal is to find the parameters
+        <Katex math={`\\theta`}/>
+        that maximize the objective function. In order to do that, we need to compute the gradient of the objective
+        function with respect to the parameters
+        <Katex math={`\\theta`}/>
+        . Remember, gradients are vectors, which point in the direction of steepest ascent. If you had the gradient,
+        you could add the gradient to the parameters and this would make the objective function larger. Let's write the
+        gradient of the objective function as
+    </p>
+    <Katex math={`\\nabla_{\\theta} J(\\pi_{\\theta}) = \\nabla_{\\theta} \\mathbb{E}_{\\tau \\sim \\pi_{\\theta}} \\left[ R(\\tau) \\right]
+`} displayMode={true}/>
+    <p>
+        This is where it gets a little tricky. The problem is that
+        <Katex math={`R(\\tau)`}/>
+        is an unknown function and it has no parameter
+        <Katex math={`\\theta`}/>
+        , which means that we can't compute the gradient of the objective function with respect to
+        <Katex math={`\\theta`}/>
+        . This means that we have to rewrite the gradient of the objective function such a way as to make it rely on
+        the things we can influence, i.e. the policy parameters
+        <Katex math={`\\theta`}/>
+        .
+    </p>
+    <p>
+        Let's have a look at the most general case. Essentially, what we have here is a function
+        <Katex math={`f(x)`}/>
+        (which stands for the reward function
+        <Katex math={`R(\\tau)`}/>
+        )
+        and a parameterized probability distribution
+        <Katex math={`p(x|\\theta)`}/>
+        (which stands for the policy
+        <Katex math={`\\pi(\\tau|\\theta)`}/>
+        ). With that we can rewrite
+        <Katex math={`\\mathbb{E}_{x \\sim p(x|\\theta)}[f(x)]`}/>
+        as the following transformations:
+    </p>
+    <p>
+        <i>Definition of Expectation:
+        </i>
+        <Katex math={`\\nabla_{\\theta} \\mathbb{E}_{x \\sim p(x|\\theta)}[f(x)] = \\nabla_{\\theta} \\int f(x) p(x|\\theta) dx
+`} displayMode={true}/>
+        <i>Bring in the gradient:</i>
+        <Katex math={`= \\int \\nabla_{\\theta} (f(x) p(x|\\theta)) dx
+`} displayMode={true}/>
+        <i>Apply chain rule:</i>
+        <Katex math={`= \\int \\left( f(x) \\nabla_{\\theta} p(x|\\theta) + \\nabla_{\\theta} f(x) p(x|\\theta) \\right) dx
+`} displayMode={true}/>
+        <i>
+            <Katex math={`\\nabla_\\theta f(x) = 0`}/>
+            because
+            <Katex math={`f(x)`}/>
+            is independent of
+            <Katex math={`\\theta`}/>
+        </i>
+        <Katex math={`= \\int f(x) \\nabla_{\\theta} p(x|\\theta) dx
+`} displayMode={true}/>
+        <i>Multiply
+            <Katex math={`\\frac{p(x|\\theta)}{p(x|\\theta)}`}/>
+        </i>
+        <Katex math={`= \\int f(x) \\frac{\\nabla_{\\theta} p(x|\\theta)}{p(x|\\theta)} p(x|\\theta) dx
+`} displayMode={true}/>
+        <i>Log trick
+            <Katex math={`\\frac{\\nabla_{\\theta} p(x|\\theta)}{p(x|\\theta)} = \\nabla_{\\theta} \\log p(x|\\theta)
+`}/>
+        </i>
+        <Katex math={`= \\int f(x) p(x|\\theta) \\nabla_{\\theta} \\log p(x|\\theta) dx
+`} displayMode={true}/>
+        <i>Definition of Expectation</i>
+        <Katex math={`= \\mathbb{E}_{x \\sim p(x|\\theta)} \\left[ f(x) \\nabla_{\\theta} \\log p(x|\\theta) \\right]
+`} displayMode={true}/>
+        <Katex math={`\\Rightarrow \\nabla_{\\theta} J(\\pi_{\\theta}) = \\mathbb{E}_{\\tau \\sim \\pi_{\\theta}} \\left[ R(\\tau) \\nabla_{\\theta} \\log \\pi(\\tau|\\theta) \\right]
+`} displayMode={true}/>
+    </p>
+    <p>
+        The only thing missing here is that we don't have
+        <Katex math={`p(\\tau|\\theta)`}/>
+        . This means, we have to apply some set of transformations to get from
+        <Katex math={`\\pi(\\tau|\\theta)`}/>
+        to something we can control and/or have access to. Notice that
+        <Katex math={`p(\\tau|\\theta)`}/>
+        is the probability to get a trajectory
+        <Katex math={`\\tau`}/>
+        given the policy
+        <Katex math={`\\pi(\\tau|\\theta)`}/>
+        . We can write this as a product of the probability to transition from state
+        <Katex math={`s_t`}/>
+        to state
+        <Katex math={`s_{t+1}`}/>
+        given the action
+        <Katex math={`a_t`}/>
+        and the probability to take that action under our current policy.
+    </p>
+    <Katex math={`p(\\tau | \\theta) = \\prod_{t \\geq 0} p(s_{t+1} | s_t, a_t) \\pi_{\\theta}(a_t | s_t)
+`} displayMode={true}/>
+    <p>
+        If we apply logs to both sides, we get the following:
+    </p>
+    <i>This first line defines the probability of a trajectory
+        <Katex math={`\\tau`}/>
+        , given the policy parameters
+        <Katex math={`\\theta`}/>
+        , as the product of the state transition probabilities and the policy's action selection probabilities.</i>
+    <Katex math={`\\log p(\\tau | \\theta) = \\sum_{t \\geq 0} \\log p(s_{t+1} | s_t, a_t) + \\log \\pi_{\\theta}(a_t | s_t)
+`} displayMode={true}/>
+    <i>Taking the logarithm of the trajectory probability gives a sum of the logarithms of the state transition
+        probabilities and the action probabilities.</i>
+    <Katex math={`\\nabla_{\\theta} \\log p(\\tau | \\theta) = \\nabla_{\\theta} \\sum_{t \\geq 0} \\log p(s_{t+1} | s_t, a_t) + \\log \\pi_{\\theta}(a_t | s_t)
+`} displayMode={true}/>
+    <i>The gradient of the log probability of the trajectory with respect to
+        <Katex math={`\\theta`}/>
+        is the sum of the gradients of the log probabilities.</i>
+    <Katex math={`\\nabla_{\\theta} \\log p(\\tau | \\theta) = \\sum_{t \\geq 0} \\nabla_{\\theta} \\log p(s_{t+1} | s_t, a_t) + \\nabla_{\\theta} \\log \\pi_{\\theta}(a_t | s_t)
+`} displayMode={true}/>
+    <i>Since the state transition probabilities
+        <Katex math={`p(s_{t+1} | s_t, a_t)`}/>
+        are independent of
+        <Katex math={`\\theta`}/>
+        , their gradients are zero, which simplifies the expression.
+    </i>
+    <Katex math={`\\nabla_{\\theta} \\log p(\\tau | \\theta) = \\sum_{t \\geq 0} \\nabla_{\\theta} \\log \\pi_{\\theta}(a_t | s_t)
+`} displayMode={true}/>
+    <i>Only the gradients of the log policy probabilities with respect to
+        <Katex math={`\\theta`}/>
+        remain</i>
+
 </section>
