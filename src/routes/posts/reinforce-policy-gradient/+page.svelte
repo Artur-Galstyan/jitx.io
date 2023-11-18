@@ -136,7 +136,7 @@
         the policy by sampling a large number of trajectories from the environment and then averaging the rewards of
         these trajectories. We can then define the objective as the expected return over all trajectories:
     </p>
-    <Katex math={`J(\\pi_{\\theta}) = \\mathbb{E}_{\\tau \\sim \\pi_{\\theta}} \\left[ R_t(\\tau) \\right] = \\mathbb{E}_{\\tau \\sim \\pi_{\\theta}} \\left[ \\sum_{i=0}^{T} \\gamma^i r_i \\right]
+    <Katex math={`J(\\pi_{\\theta}) = \\mathbb{E}_{\\tau \\sim \\pi_{\\theta}} \\left[ R_t(\\tau) \\right] = \\mathbb{E}_{\\tau \\sim \\pi_{\\theta}} \\left[ \\sum_{i=0}^{T} \\gamma^{i-t} r_i \\right]
 `} displayMode={true}/>
     <p>
         Given the objective function, the goal can be stated as finding the set of parameters for the policy that

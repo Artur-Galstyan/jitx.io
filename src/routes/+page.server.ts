@@ -17,7 +17,7 @@ export const load = (async ({ request, locals, params, url }) => {
         OR: [{ title: { search: search.split(" ").join(" | ") } }],
       },
       orderBy: {
-        createdAt: "desc",
+        updatedAt: "desc",
       },
       take: parseInt(take),
       skip: parseInt(skip),
@@ -30,7 +30,7 @@ export const load = (async ({ request, locals, params, url }) => {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        updatedAt: "desc",
       },
       take: parseInt(take),
       skip: parseInt(skip),
