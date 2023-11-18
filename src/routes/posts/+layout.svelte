@@ -26,7 +26,7 @@
     });
 
     const getStaticFile = (path: string) => {
-        return `${$page.url.pathname}/${path}`;
+        return `${$page.url.href}/${path}`;
     };
 
     let scrollY = 0;
