@@ -102,7 +102,7 @@
 </p>
 <p>
     With this, we can now define our objective function
-    <Katex math={`J_\\theta(\\pi_\\theta) = \\int_T P(\\tau | \\pi_\\theta) R(\\tau)`} displayMode={true}/>
+    <Katex math={`J(\\pi_\\theta) = \\int_T P(\\tau | \\pi_\\theta) R(\\tau)`} displayMode={true}/>
 </p>
 <p>
     Let's have a look at an extremely simple, interactive example: you're the agent and you can choose between two
@@ -177,7 +177,7 @@
     <Katex math={`-10`}/>
     . In other words,
     given your policy of always choosing door 2 and the reward structure as is then
-    <Katex math={`J_\\theta(\\pi_\\theta) = -10`}/>
+    <Katex math={`J(\\pi_\\theta) = -10`}/>
     . Simple stuff. The goal of the agent is to maximise this objective; to find a policy which maximises
     <Katex math={`J`}/>
     . In our example, that policy is to always pick door 1. On the other hand, if you pick an action randomly, then the
@@ -187,7 +187,7 @@
 </p>
 <p>
     The objective function is also called the <i>expected return</i>:
-    <Katex math={`J_\\theta(\\pi_\\theta) = \\int_T P(\\tau | \\pi_\\theta) R(\\tau) = \\mathbb{E}_{\\tau \\sim \\pi_\\theta}\\Big[ R(\\tau) \\Big]`}
+    <Katex math={`J(\\pi_\\theta) = \\int_T P(\\tau | \\pi_\\theta) R(\\tau) = \\mathbb{E}_{\\tau \\sim \\pi_\\theta}\\Big[ R(\\tau) \\Big]`}
            displayMode={true}/>
     And we're trying to maximise the expected return! By the way, the best possible policy (and also the <i>value
     functions</i> - we'll get to those) is written with a star, i.e.
@@ -260,6 +260,15 @@
 `} displayMode={true}/>
     <Katex math={`Q^*(s, a) = \\mathbb{E}_{s' \\sim P} \\left[ r(s, a) + \\gamma \\max_{a'} Q^*(s', a') \\right],
 `} displayMode={true}/>
+</p>
+<p>
+    The last important part is the advantage function. It basically describes how good it is to pick action
+    <Katex math={`a`}/>
+    in state
+    <Katex math={`s`}/>
+    compared to the average action-value function (i.e. samping
+    actions from the policy). It's defined as
+    <Katex math={`A_{\\pi}(s, a) = Q_{\\pi}(s,a) - V_{\\pi}(s)`} displayMode={true}/>
 </p>
 <p>
     And those are the basics of RL. In the next blog post, we will go one step further and implement REINFORCE (a policy
