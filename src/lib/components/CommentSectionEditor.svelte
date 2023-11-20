@@ -166,21 +166,21 @@
                         editor.chain().focus().toggleBulletList().run()}
                         class={editor.isActive("bulletList") ? "is-active" : ""}
                 >
-                    <Icon src={AiOutlineUnorderedList}/>
+                    <Icon src={AiOutlineUnorderedList} color="white"/>
                 </button>
                 <button
                         on:click={() =>
                         editor.chain().focus().toggleOrderedList().run()}
                         class={editor.isActive("orderedList") ? "is-active" : ""}
                 >
-                    <Icon src={AiOutlineOrderedList}/>
+                    <Icon src={AiOutlineOrderedList} color="white"/>
                 </button>
                 <button
                         on:click={() =>
                         editor.chain().focus().toggleCodeBlock().run()}
                         class={editor.isActive("codeBlock") ? "is-active" : ""}
                 >
-                    <Icon src={AiOutlineCode}/>
+                    <Icon src={AiOutlineCode} color="white"/>
                 </button>
                 <button
                         on:click={() =>

@@ -1,6 +1,7 @@
 <script lang="ts">
     import Katex from "$lib/components/Katex.svelte";
     import HintBox from "$lib/components/HintBox.svelte";
+    import CodeBox from "$lib/components/CodeBox.svelte";
 </script>
 
 <section>
@@ -249,5 +250,123 @@
         call <code>loss.backward()</code> and it will compute the gradient for you. In Jax, it's even more convenient as
         you can
         simply call <code>jax.grad(objective_function)</code> and it will return the gradient function for you.
+    </p>
+</section>
+<section>
+    <h3>Writing Some Code</h3>
+    <p>
+        Alright, now it's time to actually write some code. Let's start simply by implementing our policy neural network
+        first. In this blog post, I'm using Equinox, which is a neural network library built on top of Jax, but the code
+        can easily be translated into any other machine learning framework.
+    </p>
+    <CodeBox code={`
+import equinox as eqx
+import jax
+import jax.numpy as jnp
+from icecream import ic
+from jaxtyping import Array, Float32, PRNGKeyArray, PyTree
+
+
+class Policy(eqx.Module):
+    """Policy network for the policy gradient algorithm in a discrete action space."""
+
+    mlp: eqx.nn.MLP
+
+    def __init__(
+        self, in_size: int, out_size: int, depth: int, width: int, key: PRNGKeyArray
+    ) -> None:
+        self.mlp = eqx.nn.MLP(in_size, out_size, depth, width, key=key)
+
+    def __call__(self, x: Float32[Array, "state_dims"]) -> Array:
+        """Forward pass of the policy network.
+        Args:
+            x: The input to the policy network.
+        Returns:
+            The output of the policy network.
+        """
+        return self.mlp(x)
+
+    `}></CodeBox>
+    <p>
+        Our policy is just a simple MLP with a ReLU activation function. The input is the state and the output are the
+        logits for each action. Next up, the objective function:
+    </p>
+    <CodeBox code={`
+def objective_fn(
+    policy: PyTree,
+    states: Float32[Array, "batch_size n_steps state_dim"],
+    actions: Float32[Array, "batch_size n_steps"],
+    rewards: Float32[Array, "batch_size n_steps"],
+):
+    logits = eqx.filter_vmap(policy)(states)
+    log_probs = jax.nn.log_softmax(logits)
+    log_probs_actions = jnp.take_along_axis(log_probs, actions, axis=1)
+    return -jnp.mean(log_probs_actions * rewards)`}></CodeBox>
+    <p>
+        When we take the gradient of the objective function by calling <code>jax.grad(f)</code>, we will arrive at the
+        policy gradient. You might also be wondering why we return the negative mean. When we use optimiser libraries
+        such as <code>optax</code>, those libraries expect to perform gradient <i>descent</i> and not gradient ascent.
+        The reasoning is, that 99% of the time, you want to minimise the loss function and not maximise it. But in our
+        case,
+        we actually want to maximise the objective function, so we have to revert the sign to make it a minimisation
+        problem.
+    </p>
+    <p>
+        But what we have there is not a real loss function in the traditional sense. There is a beautiful explanation
+        on OpenAI's Spinning Up tutorials on this topic:
+        <q class="italic">[...] it is common for ML practitioners to interpret a loss function as a useful signal during
+            training—”if the
+            loss goes down, all is well.” In policy gradients, this intuition is wrong, and you should only care about
+            average return. The loss function means nothing.
+        </q>
+    </p>
+    <p>
+        Next, we will need a function to sample trajectories from our environment. For this, we will use the
+        this function, which performs a single rollout of the environment with discrete actions:
+    </p>
+    <CodeBox code={`
+def rollout_discrete(
+    env: gym.Env, action_fn: Callable, action_fn_kwargs: dict, key: PRNGKeyArray
+) -> tuple[Array, Array, Array, Array]:
+    obs, _ = env.reset()
+
+    observations = []
+    actions = []
+    rewards = []
+    dones = []
+
+    while True:
+        key, subkey = jax.random.split(key)
+        observations.append(obs)
+
+        action = np.array(action_fn(obs, **action_fn_kwargs, key=subkey))
+
+        obs, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
+        actions.append(action)
+        rewards.append(reward)
+        dones.append(done)
+
+        if done:
+            break
+
+    return (
+        jnp.array(observations),
+        jnp.array(actions),
+        jnp.array(rewards),
+        jnp.array(dones),
+    )
+`}></CodeBox>
+    <p>
+        The beautiful thing about this function is, that it's completely agnostic to the environment and the function,
+        which actually selects the action. The other beautiful thing is - and this is Jax exclusive - is that there are
+        implementations of some environment that you can JIT compile, which means you can run the environment on your
+        GPU! This is absolutely amazing! Even better, recently, MuJoCo and Brax announced that they will support Jax
+        natively, which means you can run those environments on your GPU as well! Now, if that's not cause for
+        celebration, I don't know what is!
+    </p>
+    <p>
+        Alright, we have our policy, we have our objective function, and we have a function to sample trajectories from
+        our environment. Now, we need to put it all together and train our policy.
     </p>
 </section>
