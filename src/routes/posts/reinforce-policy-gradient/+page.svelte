@@ -237,6 +237,17 @@
     <Katex math={`\\nabla_{\\theta} J(\\pi_{\\theta}) = \\mathbb{E}_{\\tau \\sim \\pi_{\\theta}} \\left[ \\sum_{t=0}^{T} \\nabla_{\\theta} \\log \\pi_{\\theta}(a_t|s_t) R(\\tau) \\right]
 `} displayMode={true}/>
     <p>
-        Uff, that was a lot of math. Let's take a quick break before we continue! Time for a coffee!
+        Now that we have this form, and since this is an expectation - we can sample trajectories from our environment
+        to estimate the policy gradient. The next question is: how can we actually implement this?
+    </p>
+    <p>
+        Remember, how I mentioned that taking the gradient is like an operation? This means, all we need is to implement
+        <Katex math={`\\log \\pi_{\\theta}(a_t|s_t) R(\\tau)`} displayMode={true}/>
+        in a Python function and then compute the gradient of that function by using something like <code>grad(objective_function)(params)</code>.
+        Conveniently, most neural network frameworks have this functionality built-in. For example, in PyTorch, you can
+        simply
+        call <code>loss.backward()</code> and it will compute the gradient for you. In Jax, it's even more convenient as
+        you can
+        simply call <code>jax.grad(objective_function)</code> and it will return the gradient function for you.
     </p>
 </section>
