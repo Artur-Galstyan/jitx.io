@@ -2,6 +2,7 @@
     import Katex from "$lib/components/Katex.svelte";
     import HintBox from "$lib/components/HintBox.svelte";
     import CodeBox from "$lib/components/CodeBox.svelte";
+    import Figure from "$lib/components/Figure.svelte";
 </script>
 
 <section>
@@ -272,10 +273,11 @@ class Policy(eqx.Module):
 
     mlp: eqx.nn.MLP
 
-    def __init__(
-        self, in_size: int, out_size: int, depth: int, width: int, key: PRNGKeyArray
-    ) -> None:
-        self.mlp = eqx.nn.MLP(in_size, out_size, depth, width, key=key)
+    def __init__(self, in_size: int, out_size: int, key: PRNGKeyArray) -> None:
+        key, *subkeys = jax.random.split(key, 5)
+        self.mlp = eqx.nn.MLP(
+            in_size=in_size, out_size=out_size, width_size=32, depth=2, key=key
+        )
 
     def __call__(self, x: Float32[Array, "state_dims"]) -> Array:
         """Forward pass of the policy network.
@@ -285,8 +287,7 @@ class Policy(eqx.Module):
             The output of the policy network.
         """
         return self.mlp(x)
-
-    `}></CodeBox>
+`}></CodeBox>
     <p>
         Our policy is just a simple MLP with a ReLU activation function. The input is the state and the output are the
         logits for each action. Next up, the objective function:
@@ -294,14 +295,20 @@ class Policy(eqx.Module):
     <CodeBox code={`
 def objective_fn(
     policy: PyTree,
-    states: Float32[Array, "batch_size n_steps state_dim"],
-    actions: Float32[Array, "batch_size n_steps"],
-    rewards: Float32[Array, "batch_size n_steps"],
+    states: Float32[Array, "n_steps state_dim"],
+    actions: Float32[Array, "n_steps"],
+    rewards: Float32[Array, "n_steps"],
 ):
     logits = eqx.filter_vmap(policy)(states)
     log_probs = jax.nn.log_softmax(logits)
-    log_probs_actions = jnp.take_along_axis(log_probs, actions, axis=1)
-    return -jnp.mean(log_probs_actions * rewards)`}></CodeBox>
+    log_probs_actions = jnp.take_along_axis(
+        log_probs, jnp.expand_dims(actions, -1), axis=1
+    )
+    return -jnp.mean(log_probs_actions * rewards)a
+    # alternatively:
+    # log_probs_actions = tfp.categorical.Categorical(logits=logits).log_prob(actions)
+    # return -tf.reduce_mean(log_probs_actions * rewards)
+`}></CodeBox>
     <p>
         When we take the gradient of the objective function by calling <code>jax.grad(f)</code>, we will arrive at the
         policy gradient. You might also be wondering why we return the negative mean. When we use optimiser libraries
@@ -325,9 +332,30 @@ def objective_fn(
         this function, which performs a single rollout of the environment with discrete actions:
     </p>
     <CodeBox code={`
+class RLDataset(Dataset):
+    def __init__(self, states, actions, rewards, dones) -> None:
+        self.rewards = torch.tensor(rewards)
+        self.actions = torch.tensor(actions)
+        self.obs = torch.tensor(states)
+        self.dones = torch.tensor(dones)
+
+    def __len__(self) -> int:
+        return len(self.rewards)
+
+    def __getitem__(
+        self, idx
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        return (
+            self.obs[idx],
+            self.actions[idx],
+            self.rewards[idx],
+            self.dones[idx],
+        )
+
+
 def rollout_discrete(
     env: gym.Env, action_fn: Callable, action_fn_kwargs: dict, key: PRNGKeyArray
-) -> tuple[Array, Array, Array, Array]:
+) -> RLDataset:
     obs, _ = env.reset()
 
     observations = []
@@ -340,7 +368,6 @@ def rollout_discrete(
         observations.append(obs)
 
         action = np.array(action_fn(obs, **action_fn_kwargs, key=subkey))
-
         obs, reward, terminated, truncated, _ = env.step(action)
         done = terminated or truncated
         actions.append(action)
@@ -350,11 +377,12 @@ def rollout_discrete(
         if done:
             break
 
-    return (
-        jnp.array(observations),
-        jnp.array(actions),
-        jnp.array(rewards),
-        jnp.array(dones),
+    dataset = RLDataset(
+        np.array(observations), np.array(actions), np.array(rewards), np.array(dones)
+    )
+
+    return dataset
+
     )
 `}></CodeBox>
     <p>
@@ -368,5 +396,129 @@ def rollout_discrete(
     <p>
         Alright, we have our policy, we have our objective function, and we have a function to sample trajectories from
         our environment. Now, we need to put it all together and train our policy.
+    </p>
+    <p>
+        We'll write a <code>train</code> function like so:
+    </p>
+    <CodeBox code={`
+def train(
+    policy: PyTree,
+    env: gymnasium.Env,
+    optimiser: optax.GradientTransformation,
+    n_epochs: int = 50,
+    n_episodes: int = 1000,
+):
+    opt_state = optimiser.init(eqx.filter(policy, eqx.is_array))
+    key = jax.random.PRNGKey(10)
+
+    # tqdm is a progress bar library
+    reward_log = tqdm(
+        total=n_epochs,
+        desc="Reward",
+        position=2,
+        leave=True,
+        bar_format="{desc}",
+    )
+    rewards_to_show = []
+    for epoch in tqdm(range(n_epochs), desc="Epochs", position=0, leave=True):
+        epoch_rewards = 0
+        for episode in tqdm(
+            range(n_episodes), desc="Episodes", position=1, leave=False
+        ):
+            key, subkey = jax.random.split(key)
+            dataset = gym_helpers.rollout_discrete(
+                env, get_action, {"policy": policy}, subkey
+            )
+            dataloader = DataLoader(
+                dataset, batch_size=4, shuffle=False, drop_last=True
+            )
+
+            epoch_rewards += jnp.sum(dataset.rewards.numpy())
+
+            for batch in dataloader:
+                b_states, b_actions, b_rewards, b_dones = batch
+                b_states = jnp.array(b_states.numpy())
+                b_actions = jnp.array(b_actions.numpy())
+                b_rewards = jnp.array(b_rewards.numpy())
+                b_dones = jnp.array(b_dones.numpy())
+
+                policy, opt_state = step(
+                    policy, b_states, b_actions, b_rewards, optimiser, opt_state
+                )
+        rewards_to_show.append(jnp.mean(epoch_rewards / n_episodes))
+        reward_log.set_description_str(f"Rewards: {rewards_to_show}")
+    plt.plot(rewards_to_show)
+    plt.show()
+`}></CodeBox>
+    <p>
+        A quick note on the dataset and dataloader and why we <b>really</b> want to use those. The reason is, that
+        in Jax, when you JIT a function you're entering a commitment. You're telling Jax that you want to compile this
+        using exactly these specific matrix shapes as input. If you change the shapes, Jax becomes unhappy and will
+        recompile the functions with the new shapes in hopes that you won't change them again. But the compilation takes
+        time. By using the dataloader, we can ensure that the shapes of the inputs are always the same (especially by
+        setting <code>drop_last=True</code>), which means that Jax will only compile the function once and then reuse
+        the compiled function for the rest of the training. This is a huge performance boost and is one of the reasons
+        why Jax is so fast.
+    </p>
+    <p>
+        The step function is standard Equinox/Jax/Optax code:
+    </p>
+    <CodeBox code={`
+@eqx.filter_jit
+def step(
+    policy: PyTree,
+    states: Float32[Array, "n_steps state_dim"],
+    actions: Float32[Array, "n_steps"],
+    rewards: Float32[Array, "n_steps"],
+    optimiser: optax.GradientTransformation,
+    optimiser_state: optax.OptState,
+):
+    # the gradient of the objective function w.r.t. the policy parameters is the policy gradient!
+    value, grad = eqx.filter_value_and_grad(objective_fn)(
+        policy, states, actions, rewards
+    )
+    updates, optimiser_state = optimiser.update(grad, optimiser_state, policy)
+    policy = eqx.apply_updates(policy, updates)
+
+    return policy, optimiser_state
+`}></CodeBox>
+    <p>
+        The last task is to write a main function and execute it:
+    </p>
+    <CodeBox code={`
+def main():
+    env = gymnasium.make("CartPole-v1", max_episode_steps=500)
+    key = jax.random.PRNGKey(0)
+    policy = Policy(env.observation_space.shape[0], env.action_space.n, key=key)
+    optimiser = optax.adamw(learning_rate=3e-4)
+
+    train(policy, env, optimiser)
+
+
+if __name__ == "__main__":
+    main()
+`}></CodeBox>
+    <p>
+        And that's it! You can now run the code and see how the policy learns to balance the pole on the cart. Here's
+        the result:
+    </p>
+    <Figure path="demo.webp"
+            caption="The (not final) result of the policy learning to balance the pole on the cart."></Figure>
+    <p>
+        You can see clear signs of learning, but it's not quite perfect. Take a look at the following reward plot over
+        30 epochs.
+    </p>
+    <Figure path="Figure_1.png" caption="Reward plot over 30 epochs."></Figure>
+    <p>
+        You can see that the reward is increasing, but it's not quite stable yet. And this is one of the better runs
+        too! There is a strange
+        phenomenon that I've observed, which is that the rewards will go up and up and then suddenly drop to zero.
+        This could be what people refer to as "catastrophic forgetting", because the policy overfits to the environment.
+        But strangely enough, my PyTorch implementation doesn't suffer from this problem, even though the networks are
+        almost identical.
+    </p>
+    <p>
+        But there you have it. Policy gradients! I hope you enjoyed this post and learned something new. Soon, we will
+        explore many other algorithms, such as PPO, DQN, and many more. Stay tuned and I will see you in the next one.
     </p>
 </section>
