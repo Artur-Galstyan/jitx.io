@@ -176,7 +176,7 @@
     <div class="divider">Differentiating the Outer Function (Logarithm)</div>
     <Katex math={`\\frac{d}{dx}\\log x = \\frac{1}{x}`} displayMode={true}/>
     <Katex math={` = \\frac{1}{P(\\tau | \\theta)}`} displayMode={true}/>
-    <div class="divider">Differentiating the Inner Function (Probability Function)</div>
+    <div class="divider">Diff. the Inner Function</div>
     <Katex math={`\\nabla_\\theta P(\\tau | \\theta)`} displayMode={true}/>
     <div class="divider">Multiplying the Derivatives as per Chain Rule</div>
     <Katex math={`\\frac{1}{P(\\tau | \\theta)} \\nabla_\\theta P(\\tau | \\theta)`} displayMode={true}/>
