@@ -160,7 +160,6 @@
     </div>
     <div class="font-extrabold text-lg my-4">Projects</div>
     <table class="table">
-        <!-- head -->
         <thead>
         <tr>
             <th class="hidden md:table-cell">Last Updated</th>
@@ -172,7 +171,7 @@
         <tbody>
         {#each $page.data.projects as project}
             <tr
-                    class="hover:bg-gray-100 cursor-pointer"
+                    class="hover:bg-base-200 cursor-pointer"
                     on:click={() => goto(`${project.link}`)}
             >
                 <td class="hidden md:table-cell">
