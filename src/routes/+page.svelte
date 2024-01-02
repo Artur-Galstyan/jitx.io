@@ -89,7 +89,7 @@
         class="card card-side rounded-xl hover:bg-accent hover:bg-opacity-40 transition duration-150 ease-in-out"
       >
         {#if post.thumbnail}
-          <figure class="mx-auto w-[20%] md:w-[8rem] p-1 rounded-xl">
+          <figure class="mx-auto w-[20%] md:w-[15rem] p-1 rounded-xl">
             <img
               src={"/posts/" + post.slug + "/thumbnail.webp"}
               alt={post.title}
@@ -103,9 +103,9 @@
           </h2>
           <p class="text-sm">{post.shortDescription}</p>
           <div class="card-actions">
-            <div class="my-auto flex-1 text-gray-400 text-xs flex flex-col">
+            <div class="my-auto flex-1 text-sm flex flex-col">
               <div>
-                <span class=" ">Last Updated</span>
+                <span class="my-auto">🗓️</span>
                 {new Date(post.updatedAt).toLocaleDateString("en-CA", {
                   year: "numeric",
                   month: "2-digit",
