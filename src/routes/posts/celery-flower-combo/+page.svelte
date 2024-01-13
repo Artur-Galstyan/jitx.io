@@ -66,5 +66,88 @@
     title="Hint"
     content="You could also use tools like Supabase and leverage the realtime capabilities to provide your users the task result as soon as it finishes!"
   />
-  <p>Let's start to set everything up!</p>
+  <p>
+    We will create a <code>docker-compose.yml</code> file, where we will put everything
+    in.
+  </p>
+</section>
+<section>
+  <h3>Nginx</h3>
+  <p>
+    The first thing we will setup is Nginx, our reverse proxy. There are 2
+    things we need: a <code>Dockerfile.nginx</code> file, which contains the
+    dockerised Nginx, as well as the <code>nginx.conf</code> file, which is our Nginx
+    configuration. Let's start with the Dockerfile.
+  </p>
+
+  <CodeBox
+    code={`
+FROM nginx:stable-alpine
+
+# Remove default nginx configuration
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Expose ports
+EXPOSE 80
+EXPOSE 443
+
+# Run Nginx
+CMD ["nginx", "-g", "daemon off;"]
+`}
+    filename="Dockerfile.nginx"
+    language="Dockerfile"
+  />
+  <p>
+    Along with this Dockerfile, we also need the <code>nginx.conf</code> file, so
+    let's set it up. We will gradually add more to this file as we go along.
+  </p>
+  <CodeBox
+    code={`
+user nginx;
+worker_processes 2;
+
+error_log /var/log/nginx/error.log;
+pid /var/run/nginx.pid;
+
+events {
+  worker_connections 1024;
+  use epoll;
+}
+http {
+  # we will add the stuff in here later
+}
+`}
+    filename="nginx.conf"
+    language="nginx"
+  />
+  <p>
+    Now that we have our Nginx configuration, we can add it to our
+    <code>docker-compose.yml</code> file.
+  </p>
+
+  <CodeBox
+    code={`
+version: "3.8"
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+    ports:
+      - "80:80"
+      - "443:443"
+`}
+    filename="docker-compose.yml"
+    language="yaml"
+  />
+  <p>
+    We can now run <code>docker compose up</code> and see if everything works.
+    If you go to <code>localhost</code> in your browser, you should see the default
+    Nginx page.
+  </p>
 </section>
