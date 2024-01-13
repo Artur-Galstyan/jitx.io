@@ -48,7 +48,7 @@
     "@tiptap/pm": "^2.1.12",
     "@tiptap/starter-kit": "^2.1.12",
     "@vercel/analytics": "^1.1.1",
-    "daisyui": "^4.0.6",
+    "daisyui": "^4.6.0",
     "fuse.js": "^7.0.0",
     "highlight.js": "^11.9.0",
     "katex": "^0.16.9",

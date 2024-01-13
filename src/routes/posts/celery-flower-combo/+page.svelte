@@ -7,27 +7,64 @@
 <section>
   <h3>Introduction</h3>
   <p>
-    Imagine, you developed a new AI LLM and wanted to deploy that to the web.
-    You already read my previous <a
+    I'm going to assume you already read my previous <a
       href="https://www.jitx.io/posts/ml-deployment">blogpost</a
-    > and already have quite a bit setup but you're running into a problem. For one,
-    you don't have any monitoring, which is already bad, but furthermore, you decided
-    to seperate your worker code from the API code, perhaps by writing the API in
-    a statically typed language like Rust.
+    > but now wish to go one step further and also add monitoring and a working API.
+    The following figure shows an overview of the setup we will try to build.
   </p>
+  <Figure
+    path="overview.drawio.svg"
+    caption="Overview of the non-worker part"
+  />
   <p>
-    The issue is now: how does your API (which has no access to the Python
-    worker source code) talk with your workers? And how can you monitor
-    everything?
+    There's quite a lot we need to setup in our <code>docker-compose.yml</code> file,
+    namely 7 services in total.
   </p>
+  <ul>
+    <li>
+      <b>Grafana and Prometheus:</b> those will be our monitoring tools. Grafana
+      will be what you will actually look and and Prometheus will provide the data
+      for Grafana.
+    </li>
+    <li>
+      <b>Flower</b> will talk with the Celery workers and provide us with some very
+      useful API features, such as being able to send tasks to the workers as well
+      as check the tasks' status.
+    </li>
+    <li>
+      <b>Postgres</b> will be the result backend for the Celery workers.
+    </li>
+    <li>
+      <b>RabbitMQ</b> will be the message broker for the Celery workers.
+    </li>
+    <li>
+      <b>Nginx</b> is the reverse proxy behind which everything will run. We will
+      use it to protect our API from unauthorized users.
+    </li>
+    <li>
+      <b>Backend API:</b> this will be any backend which will hold our business logic.
+    </li>
+  </ul>
   <p>
-    In this blog post, you will learn exactly that! You will learn how to deploy
-    a "Celery API" and how you can monitor your workers. And you will also learn
-    how to dockerize everything such that you can use Kubernetes at some point
-    in the future to automatically scale everything!
+    The important part is that the <b>backend API</b> will send tasks to the
+    workers via <b>Flower</b>, which provides a RESTful API. This means our
+    backend API doesn't have to be written in Python! If Flower didn't exist, we
+    would have to import the Celery app and use the `send_task` function of the
+    Celery app object, restricting us to use Python as our backend. With Flower,
+    we can just send a post request to the Flower API, which will forward our
+    request to the Celery workers.
   </p>
-  <p class="text-xs">
-    Although we won't cover how to use Kubernetes in this blog post; maybe
-    another time :)
+  <Figure path="task_flow.drawio.svg" caption="Task Flow" />
+  <p>
+    Flower, under the hood, is just a <a
+      href="https://github.com/tornadoweb/tornado">Python Tornado</a
+    > application, which instantiates the Celery app object and then simply calls
+    the `send_task` function to create a task for the workers. Once the workers are
+    done, the result is written in the result backend.
   </p>
+  <HintBox
+    title="Hint"
+    content="You could also use tools like Supabase and leverage the realtime capabilities to provide your users the task result as soon as it finishes!"
+  />
+  <p>Let's start to set everything up!</p>
 </section>
