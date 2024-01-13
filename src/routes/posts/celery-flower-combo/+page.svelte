@@ -756,4 +756,10 @@ scrape_configs:
 </section>
 <section>
   <h3>Backend API</h3>
+  <p>
+    We've setup everything we need for the Celery workers, so now we can setup
+    the business logic API. This doesn't have to be in Python, so just for
+    demonstration purposes, we will use a backend written in <b>OCaml</b>,
+    because why not.
+  </p>
 </section>
