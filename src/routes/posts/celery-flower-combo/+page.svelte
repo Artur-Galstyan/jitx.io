@@ -361,7 +361,7 @@ services:
       - FLOWER_DB=/etc/db/flower.db
     depends_on:
       - rabbitmq
-    command: celery --broker=amqp://user:password@localhost:5672// flower --basic-auth=some_user:some_password
+    command: celery --broker=amqp://user:password@rabbit_hostname:5672// flower --basic-auth=some_user:some_password
     ports:
       - "5555:5555"
     volumes:
@@ -519,7 +519,7 @@ services:
       - FLOWER_DB=/etc/db/flower.db
     depends_on:
       - rabbitmq
-    command: celery --broker=amqp://user:password@localhost:5672// flower --basic-auth=some_user:some_password
+    command: celery --broker=amqp://user:password@rabbit_hostname:5672// flower --basic-auth=some_user:some_password
     ports:
       - "5555:5555"
     volumes:
@@ -755,11 +755,209 @@ scrape_configs:
   <Figure path="grafana.webp" caption="Grafana Dashboard" />
 </section>
 <section>
-  <h3>Backend API</h3>
+  <h3>Celery Workers</h3>
   <p>
-    We've setup everything we need for the Celery workers, so now we can setup
-    the business logic API. This doesn't have to be in Python, so just for
-    demonstration purposes, we will use a backend written in <b>OCaml</b>,
-    because why not.
+    The last missing part is the Celery workers and this depends on what you
+    want to build. For this tutorial, we will use a simple Python script which
+    will just sleep for a couple of seconds and then perform addition of 2
+    numbers.
   </p>
+  <p>
+    In my case, I have used Poetry to manage the dependencies and there are a
+    few you will need.
+  </p>
+  <CodeBox
+    code={`
+[tool.poetry]
+name = "celery-workers"
+version = "0.1.0"
+description = ""
+authors = ["Artur A. Galstyan <***>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+celery = "^5.3.6"
+python-dotenv = "^1.0.0"
+sqlalchemy = "^2.0.25"
+psycopg2-binary = "^2.9.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+start_workers = "celery_workers.worker:start"
+`}
+    filename="pyproject.toml"
+    language="toml"
+  />
+  <p>
+    I've also added a <code>start_workers</code> script, which we can easily use
+    to start the workers. Here's the code for the workers.
+  </p>
+  <CodeBox
+    code={`import os
+import random
+import time
+
+from celery import Celery
+from dotenv import load_dotenv
+
+load_dotenv()
+
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
+
+assert (
+    CELERY_BROKER_URL is not None and CELERY_RESULT_BACKEND is not None
+), "Celery broker URL and result backend must be set"
+
+celery = Celery(__name__, broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
+
+
+@celery.task(name="add")
+def add(x, y):
+    time.sleep(random.randint(1, 3))
+    return x + y
+
+
+def start():
+    celery.worker_main(argv=["worker", "--loglevel=INFO"])
+`}
+    filename="worker.py"
+    language="python"
+  />
+  <p>
+    We will also need a <code>.env</code> file, which will contain the environment
+    variables for the Celery workers.
+  </p>
+  <CodeBox
+    code={`
+CELERY_BROKER_URL=amqp://user:password@localhost:5672//
+CELERY_RESULT_BACKEND=db+postgresql://user:password@localhost:5432/main
+`}
+    filename=".env"
+    language=".env"
+  />
+  <p>
+    Now, you can start the worker with <code>poetry run start_workers</code> and
+    you will see the worker start up as well as it being reflected in both the Flower
+    dashboard as well as the Grafana dashboard.
+  </p>
+  <Figure path="flower1.webp" caption="Flower Workers" />
+  <Figure path="grafana1.webp" caption="Grafana Workers" />
+  <p>
+    To actually use the workers now, you will need to send a POST request to <code
+      >http://localhost:5555/api/task/send-task/add</code
+    >
+    using the basic-auth credentials we set in the
+    <code>docker-compose.yml</code> file. The body of the request should be a JSON
+    object with the following structure (at least in our case):
+  </p>
+  <CodeBox
+    code={`{
+{
+    "args": [1, 2]
+}
+    `}
+    filename="request.json"
+    language="json"
+  />
+  <p>
+    Afterwards, you will get a <code>task-id</code> as a response. You can then
+    use that
+    <code>task-id</code> to check the status of the task by sending a GET
+    request to
+    <code>http://localhost:5555/api/task/info/YOUR_TASK_ID_HERE</code>.
+  </p>
+  <p>As a last bonus, here's a simple Dockerfile for the workers.</p>
+  <CodeBox
+    code={`
+# Use an Alpine-based Python image
+FROM python:3.12-alpine
+
+# Set the working directory in the container
+WORKDIR /usr/src/app
+
+# Install build dependencies (needed for some Python packages)
+RUN apk add --no-cache --virtual .build-deps \
+    gcc \
+    musl-dev \
+    python3-dev \
+    libffi-dev \
+    openssl-dev \
+    cargo
+
+# Install Poetry
+RUN pip install poetry
+
+# Copy the current directory contents into the container at /usr/src/app
+COPY . /usr/src/app
+
+# Install project dependencies
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi
+
+# Remove build dependencies to keep the image small
+RUN apk del .build-deps
+
+# Run the application
+CMD ["poetry", "run", "start_workers"]
+`}
+    filename="Dockerfile"
+    language="Dockerfile"
+  />
+  <p>
+    You can then build the image with <code
+      >docker build -t my-celery-app .</code
+    >
+    and run it with
+    <code>docker run --network=celery-flower-combo_default my-celery-app</code>
+    (assuming that that's the name of the network created by docker-compose). Lastly,
+    in this case you would need to use the container name of the RabbitMQ container
+    as the hostname as well as the container name of the Postgres container as the
+    database hostname. To do that, you would need to change the
+    <code>.env</code> file to the following:
+  </p>
+  <CodeBox
+    code={`# CELERY_BROKER_URL=amqp://user:password@localhost:5672//
+# CELERY_RESULT_BACKEND=db+postgresql://user:password@localhost:5432/main
+
+# use these if you use the dockerfile
+#
+#
+CELERY_BROKER_URL=amqp://user:password@rabbitmq:5672//
+CELERY_RESULT_BACKEND=db+postgresql://user:password@postgres:5432/main
+`}
+    filename=".env"
+    language="env"
+  />
+  <p>
+    That's it! You now have a working Celery worker setup with monitoring and
+    API capabilities. You can find the full code for this tutorial in <a
+      href="https://github.com/Artur-Galstyan/celery-flower-combo"
+      >this repository</a
+    >.
+  </p>
+</section>
+<section>
+  <h3>Closing notes</h3>
+  <p>
+    In this tutorial, everything was setup using localhost, which is not what
+    you would normally use in production. But the jump from the local setup to
+    the production setup is not that big. All you need to do is to configure the <code
+      >nginx.conf</code
+    >
+    file to use your domain name and then use that domain name in the environment
+    variables of the <code>.env</code> file. You would also need to setup SSL certificates
+    for your domain name, which is a bit out of scope for this tutorial.
+  </p>
+  <p>
+    I hope you found this tutorial useful and if you have any questions, feel
+    free to contact me on <a href="https://twitter.com/ArturGalstyan">Twitter</a
+    >!
+  </p>
+  <p>Thanks for reading!</p>
 </section>
