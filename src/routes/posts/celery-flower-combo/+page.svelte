@@ -933,7 +933,7 @@ CELERY_BROKER_URL=amqp://user:password@rabbitmq:5672//
 CELERY_RESULT_BACKEND=db+postgresql://user:password@postgres:5432/main
 `}
     filename=".env"
-    language="env"
+    language=""
   />
   <p>
     That's it! You now have a working Celery worker setup with monitoring and
