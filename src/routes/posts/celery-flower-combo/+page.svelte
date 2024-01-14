@@ -870,7 +870,11 @@ CELERY_RESULT_BACKEND=db+postgresql://user:password@localhost:5432/main
     use that
     <code>task-id</code> to check the status of the task by sending a GET
     request to
-    <code>http://localhost:5555/api/task/info/YOUR_TASK_ID_HERE</code>.
+    <CodeBox
+      code={`http://localhost:5555/api/task/info/YOUR_TASK_ID_HERE`}
+      filename=""
+      language=""
+    />
   </p>
   <p>As a last bonus, here's a simple Dockerfile for the workers.</p>
   <CodeBox
