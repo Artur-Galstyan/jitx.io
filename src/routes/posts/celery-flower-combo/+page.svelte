@@ -957,7 +957,8 @@ CELERY_RESULT_BACKEND=db+postgresql://user:password@postgres:5432/main
   </p>
   <p>
     I hope you found this tutorial useful and if you have any questions, feel
-    free to contact me on <a href="https://twitter.com/ArturGalstyan">Twitter</a
+    free to contact me on <a href="https://twitter.com/ArturAGalstyan"
+      >Twitter</a
     >!
   </p>
   <p>Thanks for reading!</p>
