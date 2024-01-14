@@ -922,7 +922,8 @@ CMD ["poetry", "run", "start_workers"]
     <code>.env</code> file to the following:
   </p>
   <CodeBox
-    code={`# CELERY_BROKER_URL=amqp://user:password@localhost:5672//
+    code={`
+# CELERY_BROKER_URL=amqp://user:password@localhost:5672//
 # CELERY_RESULT_BACKEND=db+postgresql://user:password@localhost:5432/main
 
 # use these if you use the dockerfile
