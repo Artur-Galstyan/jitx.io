@@ -857,7 +857,7 @@ CELERY_RESULT_BACKEND=db+postgresql://user:password@localhost:5432/main
     object with the following structure (at least in our case):
   </p>
   <CodeBox
-    code={`{
+    code={`
 {
     "args": [1, 2]
 }
