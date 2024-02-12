@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Figure from "$lib/components/Figure.svelte";
   import Katex from "$lib/components/Katex.svelte";
 </script>
 
@@ -66,5 +67,39 @@
       math={`\\nabla_\\theta J(\\pi_\\theta) = \\mathbb{E}_{\\tau\\sim\\pi_\\theta} \\left [ R(\\tau) \\sum_t \\nabla_\\theta \\pi_\\theta (a_t | s_t) \\right ]`}
       displayMode
     />
+  </p>
+  <p>
+    Furthermore, we had also improved this objective function by including a
+    bias term in the form of a value network, like so:
+
+    <Katex
+      math={`\\nabla_{\\theta} J(\\pi_{\\theta}) = \\underset{\\tau \\sim \\pi_{\\theta}}{E}{\\sum_{t=0}^{T} \\nabla_{\\theta} \\log \\pi_{\\theta}(a_t |s_t) \\left(\\sum_{t'=t}^T R(s_{t'}, a_{t'}, s_{t'+1}) - b(s_t)\\right)}`}
+      displayMode={true}
+    />
+  </p>
+  <p>
+    With this gradient, we can update the parameters of our policy, which in
+    turn should increase our rewards. In the update function, we had also
+    included a learning rate <Katex math={"\\alpha"} /> to make our step sizes not
+    so big (to avoid overshooting). But what is the biggest possible step we can
+    take in our gradient update while still keeping the training stable? That's the
+    question that PPO tries to answer.
+  </p>
+</section>
+
+<section>
+  <p>
+    One problem vanilla policy gradients have is that the performance of the
+    agent increases over time (which in of itself is a good thing) but then - at
+    some point - dramatically crashes and never recovers. That often leads to a
+    reward curve like this:
+  </p>
+  <Figure
+    path="Figure_1.png"
+    caption="Hypothetical - yet realistic - scenario"
+  />
+  <p>
+    This is very frustrating! Your agent was so close to perfection and then it
+    plummets into the abyss forever. What a tragedy :(
   </p>
 </section>
