@@ -64,7 +64,7 @@
     understand the details, I suggest you read my other <a
       href="/posts/reinforce-policy-gradient">blog post</a
     >. Anyway, the gradient of the objective function is defined as <Katex
-      math={`\\nabla_\\theta J(\\pi_\\theta) = \\mathbb{E}_{\\tau\\sim\\pi_\\theta} \\left [ R(\\tau) \\sum_t \\nabla_\\theta \\pi_\\theta (a_t | s_t) \\right ]`}
+      math={`\\nabla_\\theta J(\\pi_\\theta) = \\mathbb{E}_{\\tau\\sim\\pi_\\theta} \\left [ R(\\tau) \\sum_t \\nabla_\\theta \\log \\pi_\\theta (a_t | s_t) \\right ]`}
       displayMode
     />
   </p>
@@ -100,6 +100,52 @@
   />
   <p>
     This is very frustrating! Your agent was so close to perfection and then it
-    plummets into the abyss forever. What a tragedy :(
+    plummets into the abyss forever. What a tragedy :( We want to add some
+    constraints to ensure that our agent doesn't experience this kind of
+    catastrophic forgetting.
+  </p>
+</section>
+<section>
+  <p>
+    Let's change the objective function a bit and remove the total trajectory
+    return <Katex math={"R(\\tau)"} /> from the equation. Instead, we will use the
+    <i>advantage function</i>
+    <Katex math={"A(s_t, a_t)"} />. The advantage function gives us a measure of
+    how good taking some action <Katex math={"a_t"} /> at state <Katex
+      math={"s_t"}
+    /> was compared to the expected return. More specifically, one way of defining
+    it is <Katex math={`A(s_t, a_t) = Q(a_t, s_t) - V(s_t)`} displayMode />
+    In other words, it's the difference between taking action <Katex
+      math={"a_t"}
+    /> at state <Katex math={"s_t"} /> and then following the policy and the value
+    of being in state <Katex math={"s_t"} />. If you subtract those two, you're
+    left with the value of performing action <Katex math={"a_t"} />. Note, that
+    there other ways to calculate the advantage (and we will learn about one of
+    them later). Also note that <Katex math={"Q"} /> and <Katex math={"V"} /> are
+    themselves expectations and what we are comparing are expected values.
+  </p>
+</section>
+<section>
+  <p>
+    Now, changing our objective function to include the advantage function, we
+    get
+    <Katex
+      math={`\\nabla_{\\theta} J(\\pi_{\\theta}) = \\underset{\\tau \\sim \\pi_{\\theta}}{E}{\\sum_{t=0}^{T} \\nabla_{\\theta} \\log \\pi_{\\theta}(a_t |s_t) A(s_t, a_t)}`}
+      displayMode={true}
+    />
+  </p>
+  <p>
+    But why do we bother with the advantage function at all? Can't we just use
+    the return of the trajectory <Katex math={"R(\\tau)"} /> as we had before? Of
+    course, we <i>could</i>, but the problem with it is that it as a lot of
+    <b>variance</b>. Consider the following example in which your agent gets
+    these rewards
+  </p>
+  <pre><code class="language-python">{`5, 0, -5, 10, 0, -5, -5`}</code></pre>
+  <p>
+    The sum of these rewards is 0, i.e. <Katex math={"R(\\tau) = 0"} />. This
+    gives us very little information about what actions lead to which results.
+    We have to look at each action within the trajectory (kind of like zooming
+    into the trajectory) to get more information out of it.
   </p>
 </section>
