@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CodeBox from "$lib/components/CodeBox.svelte";
   import Figure from "$lib/components/Figure.svelte";
   import Katex from "$lib/components/Katex.svelte";
 </script>
@@ -280,5 +281,69 @@
     Unfortunately, these details don't often make it into the paper - much to my
     disappointment, because these kind of notes are incredibly valuable to
     beginners in the field.
+  </p>
+</section>
+<section>
+  Before we take a look into the advantages, let's quickly implement what we
+  talked about so far. As it turns out, the implementation is quite simple and I
+  will refer you to this <a
+    href="https://github.com/google-deepmind/rlax/blob/master/rlax/_src/policy_gradients.py#L258%23L290"
+    >implementation from the rlax library</a
+  >
+  <CodeBox
+    code={`
+def clipped_surrogate_pg_loss(
+    prob_ratios_t: Array,
+    adv_t: Array,
+    epsilon: Scalar,
+    use_stop_gradient=True) -> Array:
+  """Computes the clipped surrogate policy gradient loss.
+
+  L_clipₜ(θ) = - min(rₜ(θ)Âₜ, clip(rₜ(θ), 1-ε, 1+ε)Âₜ)
+
+  Where rₜ(θ) = π_θ(aₜ| sₜ) / π_θ_old(aₜ| sₜ) and Âₜ are the advantages.
+
+  See Proximal Policy Optimization Algorithms, Schulman et al.:
+  https://arxiv.org/abs/1707.06347
+
+  Args:
+    prob_ratios_t: Ratio of action probabilities for actions a_t:
+        rₜ(θ) = π_θ(aₜ| sₜ) / π_θ_old(aₜ| sₜ)
+    adv_t: the observed or estimated advantages from executing actions a_t.
+    epsilon: Scalar value corresponding to how much to clip the objecctive.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient to
+      advantages.
+
+  Returns:
+    Loss whose gradient corresponds to a clipped surrogate policy gradient
+        update.
+  """
+  chex.assert_rank([prob_ratios_t, adv_t], [1, 1])
+  chex.assert_type([prob_ratios_t, adv_t], [float, float])
+
+  adv_t = jax.lax.select(use_stop_gradient, jax.lax.stop_gradient(adv_t), adv_t)
+  clipped_ratios_t = jnp.clip(prob_ratios_t, 1. - epsilon, 1. + epsilon)
+  clipped_objective = jnp.fmin(prob_ratios_t * adv_t, clipped_ratios_t * adv_t)
+  return -jnp.mean(clipped_objective)
+`}
+  />
+  <p>
+    At the end, we return the negative mean. We do this, because we want to
+    maximise the objective function (as opposed to minimising a loss function as
+    is normally done in ML). That's why we return the negative mean.
+  </p>
+  <p>
+    But as you can see in that function, we need to pass in the advantages <Katex
+      math={"A_t(s_t, a_t)"}
+    />, which means we need an array of these advantages with the shape
+    <code>n_timesteps</code>.
+  </p>
+  <p>
+    Now, let's see how we can implement the advantage function. I mentioned
+    before that one way to implement it would be to find the difference between <Katex
+      math={"Q"}
+    /> and <Katex math={"V"} />, but we don't want another 2 networks to keep
+    track of those. Instead, we can compute the
+    <i>General Advantage Estimation</i> or GAE.
   </p>
 </section>
