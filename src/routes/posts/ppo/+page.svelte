@@ -148,4 +148,5 @@
     We have to look at each action within the trajectory (kind of like zooming
     into the trajectory) to get more information out of it.
   </p>
+  <p>The advantage function also gives us another, very useful hint.</p>
 </section>
