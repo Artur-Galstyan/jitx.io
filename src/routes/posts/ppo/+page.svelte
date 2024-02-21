@@ -148,5 +148,137 @@
     We have to look at each action within the trajectory (kind of like zooming
     into the trajectory) to get more information out of it.
   </p>
-  <p>The advantage function also gives us another, very useful hint.</p>
+  <p>
+    The advantage function also gives us another, very useful hint. It's sign
+    tells us if we should pursue that action again in the future. If it's
+    positive, then the performed action has given as <b
+      ><i>more reward than expected</i></b
+    >. Remember, the advantage is the difference between <Katex
+      math={"Q(s,a)"}
+    /> and
+    <Katex math={"V(s)"} />. If it was 0, then the performed action at that
+    state and the value of that state were equal, i.e. exactly as expected. If
+    it was negative, it would mean that on average the agent was better off with
+    any other action. Vice versa, a positive advantage tells us that the
+    performed action was better than expected.
+  </p>
+  <p>
+    Let's put this information safely away in a drawer in our brain and come
+    back to PPO and the problem it's trying to solve, which was <i
+      >mitigating catastrophic forgetting.
+    </i>
+    At some point - in vanilla policy gradients - an update happens which shouldn't
+    have happened.
+    <b>PPO tries to avoid this by making smaller updates</b>.
+  </p>
+  <p>
+    The way PPO does is this is by <b
+      >clipping the probability ratio within the objective function</b
+    >
+    into a certain range, which is the hyperparameter <Katex
+      math={"\\epsilon"}
+    />. It is defined as <Katex
+      math={`J(\\pi_\\theta) = \\mathbb{E}_{\\tau\\sim\\pi_\\theta} \\left[ \\sum_t^T \\min(r_\\theta(t)A(\\cdot), \\text{clip}(r_\\theta(t)A(\\cdot), 1 - \\epsilon, 1 + \\epsilon)) \\right],`}
+      displayMode
+    /> where <Katex math={"A(\\cdot)"} /> is just a shortform for <Katex
+      math={"A(s_t, a_t)"}
+    />. We will talk about what the <i>probability ratio</i> means.
+  </p>
+</section>
+<section>
+  <h2>Lightning FAQ</h2>
+  <p>
+    The vanilla objective function (not the gradient, just the objective
+    function) was defined as
+    <Katex
+      math={`J(\\pi_\\theta) = \\mathbb{E}_{\\tau\\sim\\pi_\\theta} R(\\tau) = \\int_t P(\\tau | \\pi_\\theta) R(\\tau)`}
+      displayMode
+    /> but why did we bother deriving the gradient at all? Don't we have fancy autograd
+    packages which do all that for us?
+  </p>
+  <p>
+    The answer is that - yes, we do have amazing autograd packages but even they
+    can't changes the laws of the universe. The issue - namely why we couldn't
+    just let the autograd rip and do everything for us - was that we didn't have <Katex
+      math={"P(\\tau | \\pi_\\theta)"}
+    /> because that depends on the dynamics of the environment - something we don't
+    have. That's the whole reason, we have to do all that math to get this into a
+    differentiable form.
+  </p>
+  <p>
+    Luckily, that issue is not present in the PPO objective function, which
+    means we don't have to derive it by hand. That's because everything in the
+    function is either something we have or can easily compute. Nice! Quick FAQ
+    over!
+  </p>
+</section>
+<section>
+  <h2>Back to PPO</h2>
+  <p>
+    Let's talk about the components of the objective function and we will cover
+    the easy things first. As mentioned before, <Katex math={"\\epsilon"} /> is a
+    hyperparameter, which is between 0 and 1. The <code>min</code> function is
+    hopefully something I don't have to explain. The <code>clip</code> function
+    does exactly what
+    <code>numpy.clip</code>
+    <a href="https://numpy.org/doc/stable/reference/generated/numpy.clip.html">
+      does</a
+    >. Next up is the ratio <Katex math={"r_\\theta(t)"} />, something a bit
+    more interesting.
+  </p>
+  <p>
+    Mathematically, the ratio is defined as "the ratio of probabilities between
+    your current policy and the previous policy", i.e. <Katex
+      math={`r_\\theta(t) = \\frac{\\pi_\\theta(a_t | s_t)}{\\pi_{\\theta_{\\text{old}}}(a_t | s_t)}`}
+      displayMode
+    />
+  </p>
+  <p>
+    Let's stop and think for a moment what this ratio tells us by interpreting
+    it. If the action probability in the current policy is <b>higher</b> than in
+    the previous iteration (i.e. the action is <b>now</b> more likely than before),
+    then the ratio will be positive. If the advantage function is now also positive,
+    then the whole thing becomes positive, which will encourage the action even more
+    in the future. And vice versa.
+  </p>
+  <p>
+    This ratio is like a <i>scaling factor</i>, i.e. it
+    <i>weighs</i> the advantage function. We constrain the ratio in the range of <Katex
+      math={"1\\pm\\epsilon"}
+    /> (that's how much the ratio is clipped by). We do this clipping, to prevent
+    a too-large update, e.g. if the advantage for some reason just explodes in the
+    positive direction, which would add a lot of variance and, thus, destabilise
+    the training process.
+  </p>
+  <p>
+    In essence, the ratio tells us how likely a probabilty is now compared to
+    before. It becomes more likely if the action lead to a positive advantage. A
+    positive advantage is achieved if the action performed better than expected
+    by our baseline (and vice versa).
+  </p>
+  <p>
+    One side note here: when we are referring to the policy <Katex
+      math={"\\pi(a_t | s_t)"}
+    />, we talk about a probability distribution of taking action <Katex
+      math={"a_t"}
+    /> at state <Katex math={"s_t"} />. The authors in the PPO paper defined the
+    ratio the same way we did earlier. In practice when we implement this, we
+    use <i>log probabilities</i>. We use logs here because probabilities can get
+    very small and our networks don't learn so effectively when very small
+    numbers are involved. When you log everything, those small numbers get
+    larger, which introduce numerical stability. So, when you implement this
+    objective function, then in my opinion, the authors could have written it
+    like this:
+    <Katex
+      math={`r_\\theta(t) = e^{\\log(\\pi_\\theta(\\cdot)) - \\log(\\pi_{\\theta_{\\text{old}}}(\\cdot))}`}
+      displayMode
+    />
+    where <Katex math={"\\pi(\\cdot)"} /> stands for <Katex
+      math={"\\pi(a_t | s_t)"}
+    />. Note, that this is 100% equivalent mathematically to simply computing
+    the ratios directly. But in using logs, we introduce more stability.
+    Unfortunately, these details don't often make it into the paper - much to my
+    disappointment, because these kind of notes are incredibly valuable to
+    beginners in the field.
+  </p>
 </section>
