@@ -346,4 +346,97 @@ def clipped_surrogate_pg_loss(
     track of those. Instead, we can compute the
     <i>General Advantage Estimation</i> or GAE.
   </p>
+  <p>
+    The GAE is defined as
+    <Katex
+      math={`A_t = \\sum_{l=0}^{\\infty}(\\gamma \\lambda)^l \\delta_{t+l}`}
+      displayMode
+    />
+    where <Katex math={"\\delta_{t+l}"} /> is the TD error at time <Katex
+      math={"t+l"}
+    /> and <Katex math={"\\lambda"} /> is a hyperparameter between 0 and 1 and the
+    <Katex math={"\\gamma"} /> is the discount factor. The TD error is defined as
+    <Katex
+      math={`\\delta_{t} = r_{t} + \\gamma V(s_{t+1}) - V(s_{t})`}
+      displayMode
+    />Usually, we don't really deal with infinite horizons, so we can rewrite
+    the advantage function as
+    <Katex
+      math={`A_t = \\delta_t + \\gamma \\lambda \\delta_{t+1} + (\\gamma\\lambda)^2 \\delta_{t+2} + \\ldots + (\\gamma\\lambda)^{T-t+1} \\delta_{T-1}`}
+      displayMode
+    />
+    The parameters <Katex math={"\\gamma"} /> and <Katex math={"\\lambda"} /> are
+    numbers between 0 and 1 and are hyperparameters. As you know, <Katex
+      math={"\\gamma"}
+    /> is the discount factor and <Katex math={"\\lambda"} /> allows you to interpolate
+    between TD(0) (which is <Katex math={"\\lambda=0"} />) and Monte Carlo
+    estimates (which would correspond to <Katex math={"\\lambda=1"} />).
+  </p>
+  <p>
+    Luckily, DeepMind's rlax library has this also implemented, see <a
+      href="https://github.com/google-deepmind/rlax/blob/master/rlax/_src/multistep.py#L274%23L318"
+      >here</a
+    > for their implementation.
+  </p>
+  <CodeBox
+    code={`
+def truncated_generalized_advantage_estimation(
+    r_t: Array,
+    discount_t: Array,
+    lambda_: Union[Array, Scalar],
+    values: Array,
+    stop_target_gradients: bool = False,
+) -> Array:
+  """Computes truncated generalized advantage estimates for a sequence length k.
+
+  The advantages are computed in a backwards fashion according to the equation:
+  Âₜ = δₜ + (γλ) * δₜ₊₁ + ... + ... + (γλ)ᵏ⁻ᵗ⁺¹ * δₖ₋₁
+  where δₜ = rₜ₊₁ + γₜ₊₁ * v(sₜ₊₁) - v(sₜ).
+
+  See Proximal Policy Optimization Algorithms, Schulman et al.:
+  https://arxiv.org/abs/1707.06347
+
+  Note: This paper uses a different notation than the RLax standard
+  convention that follows Sutton & Barto. We use rₜ₊₁ to denote the reward
+  received after acting in state sₜ, while the PPO paper uses rₜ.
+
+  Args:
+    r_t: Sequence of rewards at times [1, k]
+    discount_t: Sequence of discounts at times [1, k]
+    lambda_: Mixing parameter; a scalar or sequence of lambda_t at times [1, k]
+    values: Sequence of values under π at times [0, k]
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
+
+  Returns:
+    Multistep truncated generalized advantage estimation at times [0, k-1].
+  """
+  chex.assert_rank([r_t, values, discount_t], 1)
+  chex.assert_type([r_t, values, discount_t], float)
+  lambda_ = jnp.ones_like(discount_t) * lambda_  # If scalar, make into vector.
+
+  delta_t = r_t + discount_t * values[1:] - values[:-1]
+
+  # Iterate backwards to calculate advantages.
+  def _body(acc, xs):
+    deltas, discounts, lambda_ = xs
+    acc = deltas + discounts * lambda_ * acc
+    return acc, acc
+
+  _, advantage_t = jax.lax.scan(
+      _body, 0.0, (delta_t, discount_t, lambda_), reverse=True)
+
+  return jax.lax.select(stop_target_gradients,
+                        jax.lax.stop_gradient(advantage_t),
+                        advantage_t)
+`}
+    filename="RLax Implementation"
+  />
+  <p>
+    It uses a slightly different notation, namely that they truncate the episode
+    at timestep <Katex math={"k"} /> whereas in our formula above, we didn't truncate
+    the episode and instead let it run until the terminal step <Katex
+      math={"T"}
+    />.
+  </p>
 </section>
