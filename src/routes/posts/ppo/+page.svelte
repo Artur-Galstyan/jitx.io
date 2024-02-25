@@ -439,4 +439,16 @@ def truncated_generalized_advantage_estimation(
       math={"T"}
     />.
   </p>
+  <p>
+    As another side note, if you look closely at the advantage function, you
+    will notice the value function <Katex math={"V(s_t)"} />. This indicates
+    that we need another neural network to keep track of the value function.
+    This also means, that we have an actor-critic architecture.
+  </p>
+  <p>
+    Now, we have all the ingredients to implement PPO. We have the objective
+    function, the advantage function and the ratio. Let's implement all this
+    first for CartPole and then for a more complex environment such as
+    LunarLander.
+  </p>
 </section>
