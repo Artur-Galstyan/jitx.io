@@ -1,0 +1,21 @@
+---
+import DefaultLayout from "../layouts/default.astro";
+import { projects } from "../components/constants";
+const posts = await Astro.glob("../pages/posts/*.md");
+---
+
+<DefaultLayout>
+  <div class="prose">
+    <h1>Posts</h1>
+    <ul>
+      {posts.map((item) => <li>{item.frontmatter.title}</li>)}
+    </ul>
+  </div>
+  <div class="divider"></div>
+  <div class="prose">
+    <h1>Projects</h1>
+    <ul>
+      {projects.map((item) => <li>{item.name}</li>)}
+    </ul>
+  </div>
+</DefaultLayout>

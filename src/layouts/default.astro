@@ -1,0 +1,18 @@
+---
+import "@fontsource/fira-code";
+import Navbar from "../components/navbar.astro";
+---
+
+<html lang="en" data-theme="lofi">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/littlehelper.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>JITx</title>
+  </head>
+  <body class="w-[95%] md:w-[80%] mx-auto">
+    <Navbar />
+    <slot />
+  </body>
+</html>
