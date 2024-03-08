@@ -2,20 +2,41 @@
 import DefaultLayout from "../layouts/default.astro";
 import { projects } from "../components/constants";
 const posts = await Astro.glob("../pages/posts/*.md");
+posts.sort(
+  // @ts-ignore
+  (a, b) => new Date(b.frontmatter.pubDate) - new Date(a.frontmatter.pubDate),
+);
 ---
 
 <DefaultLayout>
-  <div class="prose">
-    <h1>Posts</h1>
+  <div class="w-full">
+    <h1 class="">Posts</h1>
     <ul>
-      {posts.map((item) => <li>{item.frontmatter.title}</li>)}
+      {
+        posts.map((item) => (
+          <li>
+            <a href={item.url}>
+              <span class="text-gray-400">
+                {new Date(item.frontmatter.pubDate).toISOString().slice(0, 10)}
+              </span>
+              {item.frontmatter.title}
+            </a>
+          </li>
+        ))
+      }
     </ul>
   </div>
   <div class="divider"></div>
-  <div class="prose">
-    <h1>Projects</h1>
+  <div class="">
+    <h1 class="">Projects</h1>
     <ul>
-      {projects.map((item) => <li>{item.name}</li>)}
+      {
+        projects.map((item) => (
+          <li>
+            <a href={item.url}>{item.name}</a>
+          </li>
+        ))
+      }
     </ul>
   </div>
 </DefaultLayout>
