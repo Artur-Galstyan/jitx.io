@@ -14,4 +14,8 @@
   li {
     @apply my-2;
   }
+
+  img {
+    @apply mx-auto rounded-lg my-4;
+  }
 }
