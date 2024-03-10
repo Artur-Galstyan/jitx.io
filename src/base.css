@@ -4,7 +4,7 @@
 
 @layer components {
   h1 {
-    @apply text-4xl font-bold;
+    @apply text-4xl font-bold text-center;
   }
 
   article {
@@ -17,5 +17,13 @@
 
   img {
     @apply mx-auto rounded-lg my-4;
+  }
+
+  .figures {
+    @apply flex justify-center;
+  }
+
+  .figures .half {
+    @apply mx-auto p-1 w-1/2;
   }
 }

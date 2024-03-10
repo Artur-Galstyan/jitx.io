@@ -1,7 +1,7 @@
 ---
 import "@fontsource/fira-code";
 import Navbar from "../components/navbar.astro";
-import "../../public/styles/base.css";
+import "../base.css";
 ---
 
 <html lang="en" data-theme="lofi">
@@ -11,6 +11,12 @@ import "../../public/styles/base.css";
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>JITx</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+      integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV"
+      crossorigin="anonymous"
+    />
   </head>
   <body class="w-[95%] md:w-[80%] mx-auto">
     <Navbar />

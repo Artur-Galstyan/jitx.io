@@ -10,6 +10,10 @@
 
 2024-01-02
 
+## Contents
+
+## Introduction
+
 I'm going to assume you already read my [previous blogpost]() but now wish to go one step further and also add monitoring and a working API. The following figure shows an overview of the setup we will try to build.
 
 ![Celery Flower RabbitMQ Grafana](/posts/celery-flower-combo/overview.drawio.svg)
@@ -31,7 +35,7 @@ Flower, under the hood, is just a Python Tornado application, which instantiates
 
 We will create a `docker-compose.yml` file, where we will put everything in.
 
-### Nginx
+## Nginx
 
 The first thing we will setup is Nginx, our reverse proxy. There are 2 things we need: a Dockerfile.nginx file, which contains the dockerised Nginx, as well as the nginx.conf file, which is our Nginx configuration. Let's start with the Dockerfile.
 
@@ -89,7 +93,7 @@ services:
 
 We can now run docker compose up and see if everything works.
 
-### RabbitMQ
+## RabbitMQ
 
 Now, we will setup RabbitMQ. We will use the official RabbitMQ docker image for this. Let's add this part to the docker-compose.yml file.
 
@@ -195,7 +199,7 @@ Running docker compose up should now start up both Nginx and RabbitMQ. If you na
 
 That's all we need for now.
 
-### Postgres
+## Postgres
 
 Next up is Postgres. We will use the official Postgres docker image for this. Let's add this part to the docker-compose.yml file.
 
@@ -239,7 +243,7 @@ services:
       - postgres
 ```
 
-### Flower
+## Flower
 
 The next step is setting up Flower. We will use the official Flower docker image for that. Let's add that to our docker-compose.yml file.
 
@@ -376,7 +380,7 @@ We will also need to add some stuff to our nginx.conf file.
 
 If you navigate to localhost:5555, you should see the Flower dashboard. You will have to login with the credentials we set in the docker-compose.yml file. Furthermore, if you try to perform a GET request to, e.g., `localhost:5555/api/workers`, you should get a 401 error. This is good for us, because we don't want unauthorized users to make requests to our Flower API (which is the gateway to our Celery workers). By adding to the GET request a authorization header with the credentials we set in the docker-compose.yml file, we can make the request!
 
-### Monitoring: Grafana and Prometheus
+## Monitoring: Grafana and Prometheus
 
 Next up we will setup the monitoring tools for our Celery workers, which are Grafana and Prometheus. Let's use the official Grafana and Prometheus docker images for this and add that to our docker-compose.yml file.
 
@@ -613,7 +617,7 @@ Once you run docker compose up, you should be able to navigate to localhost:3000
 
 ![Grafana Dashboard](/posts/celery-flower-combo/grafana.webp)
 
-### Celery Workers
+## Celery Workers
 
 The last missing part is the Celery workers and this depends on what you want to build. For this tutorial, we will use a simple Python script which will just sleep for a couple of seconds and then perform addition of 2 numbers.
 
@@ -749,7 +753,7 @@ CELERY_RESULT_BACKEND=db+postgresql://user:password@postgres:5432/main
 
 That's it! You now have a working Celery worker setup with monitoring and API capabilities. You can find the full code for this tutorial in [this repository](https://github.com/Artur-Galstyan/celery-flower-combo).
 
-### Closing Notes
+## Closing Notes
 
 In this tutorial, everything was setup using localhost, which is not what you would normally use in production. But the jump from the local setup to the production setup is not that big. All you need to do is to configure the nginx.conf file to use your domain name and then use that domain name in the environment variables of the `.env` file. You would also need to setup SSL certificates for your domain name, which is a bit out of scope for this tutorial.
 

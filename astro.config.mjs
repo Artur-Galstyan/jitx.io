@@ -2,6 +2,7 @@ import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import tailwind from "@astrojs/tailwind";
 import remarkToc from "remark-toc";
+import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
 export default defineConfig({
@@ -11,7 +12,7 @@ export default defineConfig({
       theme: "catppuccin-macchiato",
       wrap: true,
     },
-    remarkPlugins: [remarkToc],
+    remarkPlugins: [remarkMath, remarkToc],
     rehypePlugins: [rehypeKatex],
   },
 });
