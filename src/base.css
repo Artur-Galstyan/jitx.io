@@ -26,4 +26,8 @@
   .figures .half {
     @apply mx-auto p-1 w-1/2;
   }
+
+  .katex {
+    @apply mx-auto overflow-x-auto !important;
+  }
 }
