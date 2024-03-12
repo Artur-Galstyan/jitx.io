@@ -10,7 +10,7 @@ export default defineConfig({
   markdown: {
     shikiConfig: {
       theme: "catppuccin-macchiato",
-      wrap: true,
+      wrap: false,
     },
     remarkPlugins: [remarkMath, remarkToc],
     rehypePlugins: [rehypeKatex],
