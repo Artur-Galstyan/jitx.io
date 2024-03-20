@@ -113,3 +113,39 @@ $$
 
 where $A(·)$ is just a shortform for $A(s_t, a_t)$. We will talk about what the
 _probability ratio_ means.
+
+## Lightning FAQ
+
+The vanilla objective function (not the gradient, just the objective function) was defined as
+
+$J(\pi_\theta) = \mathbb{E}_{\tau \sim \pi_\theta} R(\tau) = \int P(\tau|\pi_\theta)R(\tau)$
+
+but why did we bother deriving the gradient at all? Don't we have fancy autograd packages which do all that for us?
+
+The answer is that - yes, we do have amazing autograd packages but even they can't changes the laws of the universe. The issue - namely why we couldn't just let the autograd rip and do everything for us - was that we didn't have $P(\tau|\pi_\theta)$ because that depends on the dynamics of the environment - something we don't have. That's the whole reason, we have to do all that math to get this into a differentiable form.
+
+Luckily, that issue is not present in the PPO objective function, which means we don't have to derive it by hand. That's because everything in the function is either something we have or can easily compute. Nice! Quick FAQ over!
+
+## Back to PPO
+
+Let's talk about the components of the objective function and we will cover the easy things first. As mentioned before, $\epsilon$ is a hyperparameter, which is between 0 and 1. The min function is hopefully something I don't have to explain. The clip function does exactly what numpy.clip does. Next up is the ratio $r_\theta(t)$, something a bit more interesting.
+
+Mathematically, the ratio is defined as "the ratio of probabilities between your current policy and the previous policy", i.e.
+
+$$
+r_\theta(t) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}
+$$
+
+Let's stop and think for a moment what this ratio tells us by interpreting it. If the action probability in the current policy is higher than in the previous iteration (i.e. the action is now more likely than before), then the ratio will be positive. If the advantage function is now also positive, then the whole thing becomes positive, which will encourage the action even more in the future. And vice versa.
+
+This ratio is like a scaling factor, i.e. it weighs the advantage function. We constrain the ratio in the range of $1 \pm \epsilon$ (that's how much the ratio is clipped by). We do this clipping, to prevent a too-large update, e.g. if the advantage for some reason just explodes in the positive direction, which would add a lot of variance and, thus, destabilise the training process.
+
+In essence, the ratio tells us how likely a probability is now compared to before. It becomes more likely if the action lead to a positive advantage. A positive advantage is achieved if the action performed better than expected by our baseline (and vice versa).
+
+One side note here: when we are referring to the policy $\pi(a_t|s_t)$, we talk about a probability distribution of taking action $a_t$ at state $s_t$. The authors in the PPO paper defined the ratio the same way we did earlier. In practice when we implement this, we use log probabilities. We use logs here because probabilities can get very small and our networks don't learn so effectively when very small numbers are involved. When you log everything, those small numbers get larger, which introduce numerical stability. So, when you implement this objective function, then in my opinion, the authors could have written it like this:
+
+$$
+r_\theta(t) = e^{\log(\pi_\theta(·))-\log(\pi_{\theta old}(·))}
+$$
+
+where $\pi(·)$ stands for $\pi(a_t|s_t)$. Note, that this is 100% equivalent mathematically to simply computing the ratios directly. But in using logs, we introduce more stability. Unfortunately, these details don't often make it into the paper - much to my disappointment, because these kind of notes are incredibly valuable to beginners in the field.
