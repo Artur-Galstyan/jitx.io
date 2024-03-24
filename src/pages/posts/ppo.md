@@ -149,3 +149,144 @@ r_\theta(t) = e^{\log(\pi_\theta(·))-\log(\pi_{\theta old}(·))}
 $$
 
 where $\pi(·)$ stands for $\pi(a_t|s_t)$. Note, that this is 100% equivalent mathematically to simply computing the ratios directly. But in using logs, we introduce more stability. Unfortunately, these details don't often make it into the paper - much to my disappointment, because these kind of notes are incredibly valuable to beginners in the field.
+
+Before we take a look into the advantages, let's quickly implement what we talked about so far. As it turns out, the implementation is quite simple and I will refer you to this implementation from [the rlax library](https://github.com/google-deepmind/rlax/blob/master/rlax/_src/policy_gradients.py#L258%23L290).
+
+```python
+def clipped_surrogate_pg_loss(
+    prob_ratios_t: Array,
+    adv_t: Array,
+    epsilon: Scalar,
+    use_stop_gradient=True) -> Array:
+  """Computes the clipped surrogate policy gradient loss.
+
+  L_clipₜ(θ) = - min(rₜ(θ)Âₜ, clip(rₜ(θ), 1-ε, 1+ε)Âₜ)
+
+  Where rₜ(θ) = π_θ(aₜ| sₜ) / π_θ_old(aₜ| sₜ) and Âₜ are the advantages.
+
+  See Proximal Policy Optimization Algorithms, Schulman et al.:
+  https://arxiv.org/abs/1707.06347
+
+  Args:
+    prob_ratios_t: Ratio of action probabilities for actions a_t:
+        rₜ(θ) = π_θ(aₜ| sₜ) / π_θ_old(aₜ| sₜ)
+    adv_t: the observed or estimated advantages from executing actions a_t.
+    epsilon: Scalar value corresponding to how much to clip the objecctive.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient to
+      advantages.
+
+  Returns:
+    Loss whose gradient corresponds to a clipped surrogate policy gradient
+        update.
+  """
+  chex.assert_rank([prob_ratios_t, adv_t], [1, 1])
+  chex.assert_type([prob_ratios_t, adv_t], [float, float])
+
+  adv_t = jax.lax.select(use_stop_gradient, jax.lax.stop_gradient(adv_t), adv_t)
+  clipped_ratios_t = jnp.clip(prob_ratios_t, 1. - epsilon, 1. + epsilon)
+  clipped_objective = jnp.fmin(prob_ratios_t * adv_t, clipped_ratios_t * adv_t)
+  return -jnp.mean(clipped_objective)
+```
+
+At the end, we return the negative mean. We do this, because we want to maximise
+the objective function (as opposed to minimising a loss function as is normally done in
+ML). That's why we return the negative mean.
+
+But as you can see in that function, we need to pass in the advantages $A_t(s_t,a_t)$,
+which means we need an array of these advantages with the shape n_timesteps.
+
+Now, let's see how we can implement the advantage function. I mentioned before that
+one way to implement it would be to find the difference between $Q$ and $V$, but we
+don't want another 2 networks to keep track of those. Instead, we can compute the
+General Advantage Estimation or GAE.
+
+The GAE is defined as
+
+$$
+A_t=\sum_{l=0}^{\infty}(\gamma\lambda)^l\delta_{t+l}
+$$
+
+where $\delta_{t+l}$ is the TD error at time $t+l$ and $\lambda$ is a hyperparameter between 0 and 1
+and the $\gamma$ is the discount factor. The TD error is defined as
+
+$$
+\delta_t=r_t+\gamma V(s_{t+1})-V(s_t)
+$$
+
+Usually, we don't really deal with infinite horizons, so we can rewrite the advantage
+function as
+
+$$
+A_t=\delta_t+\gamma\lambda\delta_{t+1}+(\gamma\lambda)^2\delta_{t+2}+...+(\gamma\lambda)^{T-t+1}\delta_{T-1}
+$$
+
+The parameters $\gamma$ and $\lambda$ are numbers between 0 and 1 and are hyperparameters. As
+you know, $\gamma$ is the discount factor and $\lambda$ allows you to interpolate between TD(0)
+(which is $\lambda=0$) and Monte Carlo estimates (which would correspond to $\lambda=1$).
+
+Luckily, DeepMind's rlax library has this also implemented, see [here](https://github.com/google-deepmind/rlax/blob/master/rlax/_src/multistep.py#L274%23L318) for their implementation.
+
+```python
+
+def truncated_generalized_advantage_estimation(
+    r_t: Array,
+    discount_t: Array,
+    lambda_: Union[Array, Scalar],
+    values: Array,
+    stop_target_gradients: bool = False,
+) -> Array:
+  """Computes truncated generalized advantage estimates for a sequence length k.
+
+  The advantages are computed in a backwards fashion according to the equation:
+  Âₜ = δₜ + (γλ) * δₜ₊₁ + ... + ... + (γλ)ᵏ⁻ᵗ⁺¹ * δₖ₋₁
+  where δₜ = rₜ₊₁ + γₜ₊₁ * v(sₜ₊₁) - v(sₜ).
+
+  See Proximal Policy Optimization Algorithms, Schulman et al.:
+  https://arxiv.org/abs/1707.06347
+
+  Note: This paper uses a different notation than the RLax standard
+  convention that follows Sutton & Barto. We use rₜ₊₁ to denote the reward
+  received after acting in state sₜ, while the PPO paper uses rₜ.
+
+  Args:
+    r_t: Sequence of rewards at times [1, k]
+    discount_t: Sequence of discounts at times [1, k]
+    lambda_: Mixing parameter; a scalar or sequence of lambda_t at times [1, k]
+    values: Sequence of values under π at times [0, k]
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
+
+  Returns:
+    Multistep truncated generalized advantage estimation at times [0, k-1].
+  """
+  chex.assert_rank([r_t, values, discount_t], 1)
+  chex.assert_type([r_t, values, discount_t], float)
+  lambda_ = jnp.ones_like(discount_t) * lambda_  # If scalar, make into vector.
+
+  delta_t = r_t + discount_t * values[1:] - values[:-1]
+
+  # Iterate backwards to calculate advantages.
+  def _body(acc, xs):
+    deltas, discounts, lambda_ = xs
+    acc = deltas + discounts * lambda_ * acc
+    return acc, acc
+
+  _, advantage_t = jax.lax.scan(
+      _body, 0.0, (delta_t, discount_t, lambda_), reverse=True)
+
+  return jax.lax.select(stop_target_gradients,
+                        jax.lax.stop_gradient(advantage_t),
+                        advantage_t)
+```
+
+It uses a slightly different notation, namely that they truncate the episode at timestep
+$k$ whereas in our formula above, we didn't truncate the episode and instead let it run
+until the terminal step $T$.
+
+As another side note, if you look closely at the advantage function, you will notice the
+value function $V(s_t)$. This indicates that we need another neural network to keep
+track of the value function. This also means, that we have an actor-critic architecture.
+
+Now, we have all the ingredients to implement PPO. We have the objective function,
+the advantage function and the ratio. Let's implement all this first for CartPole and
+then for a more complex environment such as LunarLander.
