@@ -71,10 +71,24 @@ Lovely. Arguably, the blog is _uglier_ now, but that's ok. Its goal is to transf
 
 ## Example 2: Databases
 
+_This example is a bit wishy-washy_
+
 In recent times, more and more databases have emerged. So many, that is has become a meme whether there are more JavaScript frameworks or databases out there. I'm not so sure nowadays.
 
-There can be a lot of hype around these technologies. But before following the trend blindly, ask yourself: Can I solve my task with just postgres? In 95% of times, the answer is **yes**. It may be boring, but that's ok! Postgres is one of the most battle tested databases out there and will do just fine. BuT cAn iT sCale? First, you have 1 active monthly user and that's yourself so you do you really need to care?
+There can be a lot of hype around these technologies. But before following the trend blindly, ask yourself: Can I solve my task with just postgres? In 95% of times, the answer is **yes**. It may be boring, but that's ok! Postgres is one of the most battle tested databases out there and will do just fine. BuT cAn iT sCale? You have 1 active monthly user and that's yourself so you do you really need to care?
 
-Keep it simple. Use MySQL or postgres.
+Keep it simple; use MySQL or postgres. But don't get me wrong, we engineers have a natural inclination to try out new technologies, which is a good thing! But if you're out there trying to deliver a product, then that's not the time to experiment.
 
-TBC...
+## Example 3: Abstractions
+
+So you're sitting in front of your laptop, dimmed lights, 4 mugs on the table which were once filled with coffee and you're writing some function and then it hits you. Your eyes widen, your heart starts racing. All of a sudden you can see years into the future and have noticed a case where you might need a more general function than this. You know the probability of this is slim to none, but you can't help yourself. It's now 8 mugs on the table, 3 a.m. in the morning and you've written the most abstract class imaginable, used all latin letters as type variables and were forced to add even some greek letters to make it work.
+
+You lean back, satisfied with your work. A last sip of coffee. "Perfect".
+
+It happens to most of us where we start prematurely abstracting our code and even though it feels like you're making progress, most of the time you're not and your code becomes harder to read and maintain. Instead of writing the _ThingBuilderFactory_ class, just write the _Thing_ class and be done with it. Premature abstractions in programming is like writing a detailled plan of how to learn the violin with all the music theory and a carefully crafted practice schedule, before even having touched the instrument. You feel like you're making progress, but the best way to learn the violin is to just start playing it. _Looks at violin in the corner of the room_.
+
+## When to not strive for simplicity
+
+Some problems are hard and require complex solutions. It's not always going to be possible to keep things simple. Sometimes, you'll need that new database, you'll need to add that other technology to your stack and sometimes you'll also need to write abstractions. The key is to only increase entropy when it's absolutely necessary and not just because you can.
+
+There's a lot more on this topic to be said, but I'll leave it at that for now. I hope you enjoyed this post and that it made you think about your own projects and how you can keep the entropy low. Cheers.
