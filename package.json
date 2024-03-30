@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@astrojs/mdx": "^2.2.2",
+    "@astrojs/starlight": "^0.21.2",
+    "@astrojs/starlight-tailwind": "^2.0.1",
     "@astrojs/tailwind": "^5.1.0",
     "@fontsource/fira-code": "^5.0.17",
     "astro": "^4.5.12",
