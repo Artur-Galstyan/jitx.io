@@ -2,6 +2,7 @@
 import "@fontsource/fira-code";
 import Navbar from "../components/navbar.astro";
 import "../base.css";
+import SpeedInsights from "@vercel/speed-insights/astro";
 ---
 
 <html lang="en" data-theme="lofi">
@@ -17,6 +18,7 @@ import "../base.css";
       integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV"
       crossorigin="anonymous"
     />
+    <SpeedInsights />
   </head>
   <body class="w-[95%] md:w-[80%] mx-auto">
     <Navbar />

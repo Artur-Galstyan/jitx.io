@@ -2,6 +2,7 @@
 import "@fontsource/fira-code";
 import Navbar from "../components/navbar.astro";
 import "../base.css";
+import SpeedInsights from "@vercel/speed-insights/astro";
 ---
 
 <html lang="en" data-theme="lofi">
@@ -11,6 +12,7 @@ import "../base.css";
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>JITx</title>
+    <SpeedInsights />
   </head>
   <body class="w-[95%] md:w-[80%] mx-auto">
     <Navbar />
