@@ -153,3 +153,70 @@ def test_filter():
 | filter | 0.1614s | 0.1860s |
 
 Polars was 1.1519x faster than Pandas.
+
+### Conclusion
+
+From these tests, it's clear that Polars is the better performer. Especially, the reading of the csv file is much faster. But performance isn't the only metric you should look at when you're checking out a new library or framework. It's also important to check if its API is well designed enough, to allow you to solve your problems.
+
+## The API
+
+It is generally true that Pandas looks and feels more like writing "normal" Python code and Polars kind of doesn't. That's because Polars developed a DSL - a domain specific language. It sets some expectations on the user on how Polars code should be structured. We already saw this in our little benchmark before:
+
+```python
+# Pandas
+df.loc[(df.iloc[:, 1:] > 0.5).all(axis=1)]
+
+# Polars
+df.filter(pl.all_horizontal(pl.exclude("ID") > 0.5))
+```
+
+As you can see, Polars is more "talkative". In Pandas you use a lot of the standard Python notation, like slicing, whereas in Polars you _describe_ more what you want. In Polars, there are 2 main concepts:
+
+1. Context
+2. Expressions
+
+And in the code you would often write something like:
+
+```
+[CONTEXT_DF].[CONTEXT_METHOD](EXPRESSION)
+```
+
+The `filter` function is one of those context methods (along with `select` and `with_columns`).
+
+Let's look at some other examples where the API of Pandas and Polars differ. First, let's explore the basics, e.g. _how would I get rid of a column_.
+
+In Pandas, you would use slicing with the `iloc` property, whereas in Polars, you use the `select` method along with the `exclude` expression:
+
+```python
+df_pandas_sliced = df_pandas.iloc[:, 1:]
+df_polars_sliced = df_polars.select(pl.exclude("ID"))
+# or df_polars_sliced = df_polars.drop(df_polars.columns[0])
+# if you don't know the column name
+# That would also work for Pandas
+```
+
+Which one do you prefer? For me, it's the Polars API. Let's look at another example: _normalization_.
+
+In Polars, you would write it like this:
+
+```python
+age_min = df.select(pl.col("Age").min()).to_numpy()[0, 0]
+age_max = df.select(pl.col("Age").max()).to_numpy()[0, 0]
+df = df.select(
+    ((pl.col("Age") - age_min) / (age_max - age_min)).alias("Age"),
+    pl.exclude("Age"),
+)
+```
+
+And in Pandas, it's this:
+
+```python
+age_min = df["Age"].min()
+age_max = df["Age"].max()
+
+df["Age"] = (df["Age"] - age_min) / (age_max - age_min)
+```
+
+This point clearly goes to Pandas.
+
+(At this point, it needs to be stated that I'm by no means an mega expert on both of these libraries. Especially in Polars, which is what I'm in the middle of learning - so perhaps there is a better way to handle _normalization_ than what I conjured up)
