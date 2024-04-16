@@ -91,4 +91,65 @@ def test_open_csv():
 | -------- | ------ | ------- |
 | read_csv | 2.926s | 21.093s |
 
-Polars was 7.2077x faster than Pandas
+Polars was 7.2077x faster than Pandas.
+
+### Get min/max
+
+```python
+def test_get_min():
+    pl_df = pl.read_csv(DATA_PATH)
+    pd_df = pd.read_csv(DATA_PATH)
+
+    pl_val, pl_start_time, pl_end_time, pl_time = measure_time(pl_df.min, "Polars")
+    pd_val, pd_start_time, pd_end_time, pd_time = measure_time(pd_df.min, "Pandas")
+
+    assert np.allclose(pl_val.to_numpy(), pd_val.to_numpy())
+    log_time(pl_time, pd_time)
+
+def test_get_max():
+    pl_df = pl.read_csv(DATA_PATH)
+    pd_df = pd.read_csv(DATA_PATH)
+
+    pl_val, pl_start_time, pl_end_time, pl_time = measure_time(pl_df.max, "Polars")
+    pd_val, pd_start_time, pd_end_time, pd_time = measure_time(pd_df.max, "Pandas")
+
+    assert np.allclose(pl_val.to_numpy(), pd_val.to_numpy())
+    log_time(pl_time, pd_time)
+
+
+```
+
+| Task | Polars  | Pandas  |
+| ---- | ------- | ------- |
+| min  | 0.1736s | 0.3275s |
+| max  | 0.1603s | 0.0.28s |
+
+Polars was 1.88691x faster than Pandas (min).
+
+Polars was 1.72244x faster than Pandas (max).
+
+### Filtering
+
+```python
+def test_filter():
+    pl_df = pl.read_csv(DATA_PATH)
+    pd_df = pd.read_csv(DATA_PATH)
+
+    pd_fun = lambda df: df.loc[(df.iloc[:, 1:] > 0.5).all(axis=1)]
+    pd_fun = partial(pd_fun, df=pd_df)
+    pd_val, pd_start_time, pd_end_time, pd_time = measure_time(pd_fun, "Pandas")
+
+    pl_fun = lambda df: df.filter(pl.all_horizontal(pl.exclude("ID") > 0.5))
+    pl_fun = partial(pl_fun, df=pl_df)
+    pl_val, pl_start_time, pl_end_time, pl_time = measure_time(pl_fun, "Polars")
+
+    assert np.allclose(pd_val.to_numpy(), pl_val.to_numpy())
+    log_time(pl_time, pd_time)
+
+```
+
+| Task   | Polars  | Pandas  |
+| ------ | ------- | ------- |
+| filter | 0.1614s | 0.1860s |
+
+Polars was 1.1519x faster than Pandas.
