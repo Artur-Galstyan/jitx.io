@@ -8,8 +8,6 @@
 
 ## Polars - The Better Pandas?
 
-(Draft)
-
 ## Contents
 
 ## Introduction
@@ -220,3 +218,11 @@ df["Age"] = (df["Age"] - age_min) / (age_max - age_min)
 This point clearly goes to Pandas.
 
 (At this point, it needs to be stated that I'm by no means an mega expert on both of these libraries. Especially in Polars, which is what I'm in the middle of learning - so perhaps there is a better way to handle _normalization_ than what I conjured up)
+
+### What this means for you
+
+Polars is objectively the faster library compared to Pandas and if that matters to you, then Polars is your go-to library. But beware, that once your data gets in the terrabyte realm, even Polars themselves recommend you choose a different tool.
+
+Pandas is a good choice for you, if you enjoy having _tons_ of examples already out there. In terms of documentation, I'd say both are very well documented.
+
+Overall, I enjoy Polars more. There is a lot of _stuff_ happening which is hidden behind Python syntax, which I'm not a big fan of. Polars is very explicit about what it does, which I like more.
