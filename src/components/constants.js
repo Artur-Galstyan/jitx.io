@@ -5,8 +5,8 @@ export const projects = [
     url: "https://github.com/Artur-Galstyan/jaxonloader",
   },
   {
-    name: "Kira",
-    description: "A suite of transformers in JAX",
-    url: "https://github.com/Artur-Galstyan/kira",
+    name: "Jaxonmodels",
+    description: "A bunch of models implemented in JAX (WIP)",
+    url: "https://github.com/Artur-Galstyan/jaxonmodels",
   },
 ];
