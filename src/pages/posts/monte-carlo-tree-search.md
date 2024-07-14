@@ -110,3 +110,42 @@ Well, the answer is that most of the time, there won't be a static tree sitting 
 In other words, we need to construct 2 functions: one that creates the root node (analogous to the `env.reset()` function if you're familiar with the `gym` API) and a kind of `env.step()` function (which we will just call `step`). Imagine you'd have to write out a tree for the entire game of chess. That's impossible which is why you simply create those 2 functions which determine the environment dynamics.
 
 Let's say you have a neural network or something and that thing has a bunch of parameters, which you would want to *give* the MCTS algorithm because you want the `step` function of MCTS to have access to your neural network parameters (in order to take the right actions). The `step` function of the MCTS takes your parameters (among other things) as input and then applies the environment dynamics. Then, for each action you compute the UCB1, choose the next action and repeat the process.
+
+Since we're building a library, we want to be as explicit as we can with our types, otherwise using Python libraries that don't force you into a certain kind of API can be a bit *wishy washy*.
+
+For that, we will declare 2 callables: a `RootFnCallable` and the step function `StepFnCallable`. Now, we need to think about what we want from the user. We need from the user the parameters of whatever algorithm is being used, the current average value of the root node as well as the state representation of the root node. Let's define a struct which holds those values and force the user to return us this object.
+
+```python
+class RootFnOutput:
+    params: PyTree
+    value: Array
+    state: PyTree
+
+
+RootFnCallable = Callable[..., RootFnOutput]
+```
+
+Let's say we did something like this:
+
+```python
+def get_root() -> int:
+    return 123
+
+
+def forward(root_fn: RootFnCallable):
+    root_fn()
+
+
+forward(get_root)
+```
+
+Then Pyright should complain here saying something like:
+
+```
+Argument of type "() -> int" cannot be assigned to parameter "root_fn" of type "RootFnCallable" in function "forward"
+  Type "() -> int" is incompatible with type "RootFnCallable"
+    Function return type "int" is incompatible with type "RootFnOutput"
+      "int" is incompatible with "RootFnOutput"
+```
+
+Which means we can now force the user to follow our API.
