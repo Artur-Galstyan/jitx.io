@@ -67,6 +67,46 @@ In other words, you give it a list of child nodes, the function calculates (e.g.
 The mathematics of UCB1 are quite simple:
 
 $$
-  UCB1(s) = V(s) + C \sqrt{\frac{ln N(s)}{n(s)}},
+  UCB1(s) = V(s) + C \sqrt{\frac{\ln n(s_{parent})}{n(s)}},
 $$
-where $V(s)$ is the average value of the state $s$, $C$ is a constant to balance exploration and exploitation, $N(s)$ is the number of visits to the **parent** node of $s$ and $n(s)$ is the number of visits to the state $s$.
+where $V(s)$ is the average value of the state $s$, $C$ is a constant to balance exploration and exploitation, $n(s_{parent})$ is the number of visits to the **parent** node of $s$ and $n(s)$ is the number of visits to the state $s$.
+
+In Python, we implement this as follows:
+
+```python
+import jax
+import jax.numpy as jnp
+from jaxtyping import Array, Float
+
+
+def ucb1(
+    avg_node_value: Float[Array, ""],
+    visits_parent: Float[Array, ""],
+    visits_node: Float[Array, ""],
+    exploration_exploitation_factor: Float[Array, ""] = jnp.array(2.0),
+) -> Float[Array, ""]:
+    """
+    Upper Confidence Bound 1 (UCB1) formula for MCTS.
+
+    Args:
+        avg_node_value: The average value of the current node. V(s)
+        visits_parent: The number of visits of the parent node. N(s_parent)
+        visits_node: The number of visits of the current node. n(s)
+        exploration_exploitation_factor: The exploration-exploitation factor
+            that balances between exploration and exploitation. C
+
+    Returns:
+        The UCB1 value of the current node. UCB1(s)
+    """
+    return avg_node_value + exploration_exploitation_factor * jnp.sqrt(
+        jnp.log(visits_parent) / visits_node
+    )
+```
+
+Simple stuff. Now, how do we go about traversing the tree? Where is the tree anyway? What does the data structure implementation look like?
+
+Well, the answer is that most of the time, there won't be a static tree sitting somewhere to be passed around. In reality, we will create *callbacks* which construct the tree as we step forward in our environment.
+
+In other words, we need to construct 2 functions: one that creates the root node (analogous to the `env.reset()` function if you're familiar with the `gym` API) and a kind of `env.step()` function (which we will just call `step`). Imagine you'd have to write out a tree for the entire game of chess. That's impossible which is why you simply create those 2 functions which determine the environment dynamics.
+
+Let's say you have a neural network or something and that thing has a bunch of parameters, which you would want to *give* the MCTS algorithm because you want the `step` function of MCTS to have access to your neural network parameters (in order to take the right actions). The `step` function of the MCTS takes your parameters (among other things) as input and then applies the environment dynamics. Then, for each action you compute the UCB1, choose the next action and repeat the process.
