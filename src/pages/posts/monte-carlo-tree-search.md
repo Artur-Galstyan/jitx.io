@@ -122,30 +122,22 @@ class RootFnOutput:
     state: PyTree
 
 
-RootFnCallable = Callable[..., RootFnOutput]
+class RootFnCallable(Protocol):
+    def __call__(self, *args: Any, **kwargs: Any) -> RootFnOutput: ...
+
+
+def get_root() -> RootFnOutput:
+    return RootFnOutput()
+
+
+@beartype
+class MCTS:
+    def __init__(self, root_fn: RootFnCallable) -> None:
+        self.root_fn = RootFnCallable
+
+
+if __name__ == "__main__":
+    mcts = MCTS(get_root)
 ```
 
-Let's say we did something like this:
-
-```python
-def get_root() -> int:
-    return 123
-
-
-def forward(root_fn: RootFnCallable):
-    root_fn()
-
-
-forward(get_root)
-```
-
-Then Pyright should complain here saying something like:
-
-```
-Argument of type "() -> int" cannot be assigned to parameter "root_fn" of type "RootFnCallable" in function "forward"
-  Type "() -> int" is incompatible with type "RootFnCallable"
-    Function return type "int" is incompatible with type "RootFnOutput"
-      "int" is incompatible with "RootFnOutput"
-```
-
-Which means we can now force the user to follow our API.
+If the user now passed in anything which is does not implement the `RootFnCallable`, then `beartype` will complain. We will follow this principle throughout the code.
