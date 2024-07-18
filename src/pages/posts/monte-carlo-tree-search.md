@@ -113,13 +113,16 @@ Let's say you have a neural network or something and that thing has a bunch of p
 
 Since we're building a library, we want to be as explicit as we can with our types, otherwise using Python libraries that don't force you into a certain kind of API can be a bit *wishy washy*.
 
-For that, we will declare 2 callables: a `RootFnCallable` and the step function `StepFnCallable`. Now, we need to think about what we want from the user. We need from the user the parameters of whatever algorithm is being used, the current average value of the root node as well as the state representation of the root node. Let's define a struct which holds those values and force the user to return us this object.
+For that, we will declare 2 callables: a `RootFnCallable` and the step function `StepFnCallable`. Let's start with the `RootFnCallable`. Now, we need to think about what we want from the user. We need from the user the parameters of whatever algorithm is being used, the current average value of the root node as well as the state representation of the root node. Let's define a struct which holds those values and force the user to return us this object.
 
 ```python
-class RootFnOutput:
+
+class RootFnOutput(BaseModel):
     params: PyTree
     value: Array
     state: PyTree
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class RootFnCallable(Protocol):
@@ -127,17 +130,30 @@ class RootFnCallable(Protocol):
 
 
 def get_root() -> RootFnOutput:
-    return RootFnOutput()
+    return RootFnOutput(params=jnp.zeros(()), value=jnp.zeros(()), state=jnp.zeros(()))
+
+
+def get_wrong_root() -> int:
+    return 0
 
 
 @beartype
 class MCTS:
     def __init__(self, root_fn: RootFnCallable) -> None:
-        self.root_fn = RootFnCallable
+        assert isinstance(
+            root_fn(), RootFnOutput
+        ), "The root_fn must return a RootFnOutput object."
+        self.root_fn = root_fn
 
 
 if __name__ == "__main__":
     mcts = MCTS(get_root)
+    print(f"{mcts.root_fn()=}")  # this will work
+
+    mcts = MCTS(get_wrong_root)
+    print(f"{mcts.root_fn()=}")  # this will not work
 ```
 
-If the user now passed in anything which is does not implement the `RootFnCallable`, then `beartype` will complain. We will follow this principle throughout the code.
+If the user now passed in anything which is does not implement the `RootFnCallable`, then `MCTS` will complain. We will follow this principle throughout the code.
+
+The next thing we need is the `StepFnCallable`. Again, we need to think about what this function would want as input from the user during each iteration. It's definately going to be the parameters (which you return in the `RootFnOutput`), and the current state of the node, some RNG keys and the action you want to take in order to progress in the environment. The function should return the next state representation as well as the reward you get from the environment. It should probably also return the value of the next state (and perhaps other data that I can't think of right now).
