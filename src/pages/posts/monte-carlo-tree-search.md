@@ -27,9 +27,88 @@ To implement MCTS, we first need to know how it works. MCTS consists of 4 steps:
 - Backpropagation
 
 **Quick footnote on the rollout step**:
-Newer versions of MCTS don't use the traditional rollout step anymore. In traditional MCTS, you would have a default policy (e.g. action randomly) and use that to step through the environment until you reach a terminal node and get the final reward from the environment. With AlphaGo, this entire step is skipped because instead of simulating the entire environment, you simply use a learned value function to "guess" the value of the newly expanded node. This is much, much faster, because you don't have to simulate the environment anymore, might actually provide better estimates of the value (especially if you have very complex environments, where random walks don't give you much information) and it allows you to use whatever information you learned about the environment.
+You actually don't _have to_ perform a rollout. You do a rollout in the first place to estimate the _value of being in the current state_, to see what being in that state is worth.
+But you could just as well use a neural network to estimate that value - in fact, this is what is typically used in MCTS these days.
 
-So, let's go through each step.
+
+### Our Environment
+
+Before we actually start with implementing our MCTS algorithm, let's first have a look at our environment. The specific implementation doesn't matter, so I'll just leave it here for you
+to toggle it into view if you want to.
+
+
+<details>
+<summary>Bandit Environment</summary>
+
+```python
+
+class BanditEnvironment:
+    """
+        This game tree looks like this:
+
+            0
+        / \\
+        1   2
+        / \\ / \\
+        3   4 5  6
+    """
+
+    def __init__(self):
+        self.tree = {0: [1, 2], 1: [3, 4], 2: [5, 6], 3: [], 4: [], 5: [], 6: []}
+        self.current_state = np.array(0)
+
+    def reset(self):
+        self.current_state = np.array(0)
+        return self.current_state
+
+    def set_state(self, state):
+        assert state in [0, 1, 2, 3, 4, 5, 6]
+        self.current_state = state
+
+    def step(self, action):
+        if self.current_state in [3, 4, 5, 6]:
+            return self.current_state, 0, True
+
+        if action < 0 or action >= len(self.tree[int(self.current_state)]):
+            raise ValueError("Invalid action")
+
+        self.current_state = self.tree[int(self.current_state)][action]
+
+        done = self.current_state in [3, 4, 5, 6]
+        reward = 1 if self.current_state == 6 else 0
+
+        return self.current_state, reward, done
+
+    def render(self):
+        print(f"Current state: {self.current_state}")
+
+    @staticmethod
+    def get_future_value(state):
+        if state == 2:
+            return 0.5
+        elif state == 6:
+            return 1
+        else:
+            return 0
+```
+</details>
+
+In our environment, we have 7 states in total and the game tree would look like this:
+
+![Game Tree](/posts/monte-carlo-tree-search/game_tree.drawio.svg)
+
+You have at each state two available actions: going left or right. As you can see, only choosing the 'going right' action at state $2$ gives you a
+reward of $1$, else you get a reward of $0$. The states $3$, $4$, $5$ and $6$ are terminal states, meaning the episode ends if you reach any
+of those states.
+
+From this, it's clear with route you should take, which is
+$$
+0 \rightarrow 2 \rightarrow 6
+$$
+
+This is the optimal path which we're trying to find using MCTS.
+
+With that in mind, let's look at each of the steps from the MCTS algorithm and how we could implement them.
 
 ### Traversal
 
