@@ -30,6 +30,7 @@ To implement MCTS, we first need to know how it works. MCTS consists of 4 steps:
 You actually don't _have to_ perform a rollout. You do a rollout in the first place to estimate the _value of being in the current state_, to see what being in that state is worth.
 But you could just as well use a neural network to estimate that value - in fact, this is what is typically used in MCTS these days.
 
+We're going to implement two versions of MCTS: one more object-oriented-_ish_ and one using arrays. The reason for that is that the OO version is easier to understand and it's easy to translate that to the efficient array version.
 
 ### Our Environment
 
@@ -139,33 +140,124 @@ where $V(s)$ is the average value of the state $s$, $C$ is a constant to balance
 In Python, we implement this as follows:
 
 ```python
-import jax
-import jax.numpy as jnp
-from jaxtyping import Array, Float
+import numpy as np
 
 
-def ucb1(
-    avg_node_value: Float[Array, ""],
-    visits_parent: Float[Array, ""],
-    visits_node: Float[Array, ""],
-    exploration_exploitation_factor: Float[Array, ""] = jnp.array(2.0),
-) -> Float[Array, ""]:
-    """
-    Upper Confidence Bound 1 (UCB1) formula for MCTS.
-
-    Args:
-        avg_node_value: The average value of the current node. V(s)
-        visits_parent: The number of visits of the parent node. N(s_parent)
-        visits_node: The number of visits of the current node. n(s)
-        exploration_exploitation_factor: The exploration-exploitation factor
-            that balances between exploration and exploitation. C
-
-    Returns:
-        The UCB1 value of the current node. UCB1(s)
-    """
-    return avg_node_value + exploration_exploitation_factor * jnp.sqrt(
-        jnp.log(visits_parent) / visits_node
+def ucb1(avg_node_value, visits_parent, visits_node, exploration_exploitation_factor=2):
+    return avg_node_value + exploration_exploitation_factor * np.sqrt(
+        np.log(visits_parent) / visits_node
     )
 ```
 
 Simple stuff. Now, how do we go about traversing the tree? Where is the tree anyway? What does the data structure implementation look like?
+
+### A Node
+
+Let's start with a node class and put in all the properties we already know a node should have.
+
+
+```python
+from beartype.typing import Any
+
+class Node:
+    index: int
+
+    child_nodes: dict[int, "Node"]
+    parent_node: "Node | None"
+
+    visits: int
+    value: float
+
+    embedding: Any
+```
+
+A node will get more properties later, but these are the core ones we care about. The child nodes dictionary maps an action (we're dealing with discrete actions) of type integer to another node. We use the double quotes as a "forward reference" because the `Node` class hasn't been fully defined at that point.
+
+Each `Node` will also have a reference to its parent but not all nodes will have a parent. Actually, only the root node will not have a parent and by checking if `node.parent is None` we can infer if the current node is the root node.
+
+We also keep track of the number of visits as well as the node's average value. Lastly, each node will be "assigned a state" from our environment and that will be stored in the `embedding` field. In our example, that will be simply the index of the state (e.g. index $6$, which is the terminal state and gives a reward of 1).
+
+Let's add an `__init__` and a `__repr__` and a helper function:
+
+```python
+class Node:
+    index: int
+
+    child_nodes: dict[int, "Node"]
+    parent_node: "Node | None"
+
+    visits: int
+    value: float
+
+    embedding: Any
+
+    def __init__(self, parent: "Node | None", index: int, embedding: Any) -> None:
+        self.parent = parent
+        self.index = index
+        self.embedding = embedding
+
+        self.child_nodes = dict()
+        self.visits, self.value = 0, 0
+
+    def is_child_visited(self, action) -> bool:
+        return action in self.child_nodes
+
+    def __repr__(self) -> str:
+        return f"[Index: {self.index}, Parent: {self.parent.index if self.parent is not None else None}, Value: {np.round(self.value, 2)}, Visits: {self.visits}]"
+```
+
+And now, we can initialise our root node:
+
+```python
+def get_root_node(env: BanditEnvironment) -> Node:
+    obs = env.reset()
+    return Node(parent=None, index=0, embedding=obs)
+
+
+env = BanditEnvironment()
+root_node = get_root_node(env)
+```
+
+### Tree Traversal
+
+And with that, we can implement our tree traversal function. I'll paste it here first and then we will go over it step by step.
+
+```python
+def traversal(
+    root_node: Node, max_depth: int, action_selection_fn: Callable[[Node, int], int]
+) -> tuple[Node, int]:
+    class TraversalState(NamedTuple):
+        node: Node
+        next_node: Node | None
+        action: int
+        depth: int
+        proceed: bool
+
+    def _traversal(state: TraversalState) -> TraversalState:
+        node = state.next_node
+        assert node is not None
+        action = action_selection_fn(node, state.depth)
+        child_visited = node.is_child_visited(action)
+        if not child_visited:
+            next_node = None
+        else:
+            next_node = node.child_nodes[action]
+        proceed = not child_visited and state.depth + 1 < max_depth
+
+        return TraversalState(
+            node=node,
+            next_node=next_node,
+            action=action,
+            depth=state.depth + 1,
+            proceed=proceed,
+        )
+
+    state = TraversalState(
+        node=root_node, next_node=root_node, action=0, depth=0, proceed=True
+    )
+
+    while state.proceed:
+        state = _traversal(state)
+
+    return state.node, state.action
+```
