@@ -277,3 +277,31 @@ This means in the first iteration, `node = state.next_node` refers to what?
 3) I don't know :(
 
 The answer is: the root node! Now that we have the current node (which is the root in the first iteration), we use the `action_selection_fn` callable to select the next action. In our case, that is going to be the `UCB1` function. Once we have the action, we check whether or not the next state was visited or not. If it's not visited, we can stop right there, otherwise we select that action, increment the depth by 1 and then proceed with the next step. The while loop will end, once `proceed` is `False`. Finally, we will return the `node` (which is the parent) and the action we want to expand.
+
+We can write a quick method to implement the `action_selection_fn`:
+
+```python
+def inner_simulation_fn(node: Node, depth: int, n_actions: int):
+    best_action = -1
+    best_ucb = float("-inf")
+    for action in range(n_actions):
+        if not node.is_child_visited(action):
+            return action
+        else:
+            child = node.child_nodes[action]
+            ucb = ucb1(
+                avg_node_value=child.value,
+                visits_parent=node.visits,
+                visits_node=child.visits,
+            )
+            if ucb > best_ucb:
+                best_ucb = ucb
+                best_action = action
+    return best_action
+
+
+n_actions = 2 # from our environment
+action_selection_function_partial = functools.partial(inner_simulation_fn, n_actions=n_actions)
+```
+
+We will pass in the partial into the traversal function.
