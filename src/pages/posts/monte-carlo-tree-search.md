@@ -227,15 +227,14 @@ def traversal(
     root_node: Node, max_depth: int, action_selection_fn: Callable[[Node, int], int]
 ) -> tuple[Node, int]:
     class TraversalState(NamedTuple):
-        node: Node
-        next_node: Node | None
-        action: int
-        depth: int
-        proceed: bool
+        node: Node # the parent node
+        next_node: Node | None # the child node
+        action: int # the action to perform from the parent node
+        depth: int # the current depth
+        proceed: bool # whether or not to continue
 
     def _traversal(state: TraversalState) -> TraversalState:
-        node = state.next_node
-        assert node is not None
+        node = state.next_node # the current node is last iteration's next node
         action = action_selection_fn(node, state.depth)
         child_visited = node.is_child_visited(action)
         if not child_visited:
@@ -261,3 +260,20 @@ def traversal(
 
     return state.node, state.action
 ```
+
+The `TraversalState` is simply a struct to keep track of the traversal. We initialize the first state like so:
+
+```python
+state = TraversalState(
+    node=root_node, next_node=root_node, action=0, depth=0, proceed=True
+)
+```
+For the first iteration, we don't care about `state.node` and if you're happy to ignore pyright, you might also set it to `None`, but we deeply care about pyright, so we won't (remember, that the `state.node` refers to the parent and that the root node has no parent). We set the `next_node` to the root node and in our traversal loop, we set the current node to be last iteration's `next_node`. That's why we have to assert that `node` is not `None`.
+
+This means in the first iteration, `node = state.next_node` refers to what?
+
+1) `None`
+2) root
+3) I don't know :(
+
+The answer is: the root node! Now that we have the current node (which is the root in the first iteration), we use the `action_selection_fn` callable to select the next action. In our case, that is going to be the `UCB1` function. Once we have the action, we check whether or not the next state was visited or not. If it's not visited, we can stop right there, otherwise we select that action, increment the depth by 1 and then proceed with the next step. The while loop will end, once `proceed` is `False`. Finally, we will return the `node` (which is the parent) and the action we want to expand.
