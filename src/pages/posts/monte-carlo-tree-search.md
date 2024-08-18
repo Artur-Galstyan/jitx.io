@@ -111,9 +111,9 @@ This is the optimal path which we're trying to find using MCTS.
 
 With that in mind, let's look at each of the steps from the MCTS algorithm and how we could implement them.
 
-### Traversal
+### Selection
 
-In traversal, we first need to find a so-called _leaf node_. A leaf node is a node in a tree, which has no children. To do that, we apply the following simple algorithm:
+In selection, we first need to find a so-called _leaf node_. A leaf node is a node in a tree, which has no children. To do that, we apply the following simple algorithm:
 
 
 ![Traversal](/posts/monte-carlo-tree-search/MCTS_Traversal.drawio.svg)
@@ -168,12 +168,17 @@ class Node:
     visits: int
     value: float
 
+    reward: float
+    discount: float
+
     embedding: Any
 ```
 
-A node will get more properties later, but these are the core ones we care about. The child nodes dictionary maps an action (we're dealing with discrete actions) of type integer to another node. We use the double quotes as a "forward reference" because the `Node` class hasn't been fully defined at that point.
+The child nodes dictionary maps an action (we're dealing with discrete actions) of type integer to another node. We use the double quotes as a "forward reference" because the `Node` class hasn't been fully defined at that point.
 
 Each `Node` will also have a reference to its parent but not all nodes will have a parent. Actually, only the root node will not have a parent and by checking if `node.parent is None` we can infer if the current node is the root node.
+
+The reward and discount will be values we receive from the environment - more on that later.
 
 We also keep track of the number of visits as well as the node's average value. Lastly, each node will be "assigned a state" from our environment and that will be stored in the `embedding` field. In our example, that will be simply the index of the state (e.g. index $6$, which is the terminal state and gives a reward of 1).
 
@@ -188,6 +193,8 @@ class Node:
 
     visits: int
     value: float
+    reward: float
+    discount: float
 
     embedding: Any
 
@@ -197,7 +204,7 @@ class Node:
         self.embedding = embedding
 
         self.child_nodes = dict()
-        self.visits, self.value = 0, 0
+        self.visits, self.value, self.reward, self.discount = 0, 0, 0, 0
 
     def is_child_visited(self, action) -> bool:
         return action in self.child_nodes
@@ -218,32 +225,39 @@ env = BanditEnvironment()
 root_node = get_root_node(env)
 ```
 
-### Tree Traversal
+### Selection (Again)
 
-And with that, we can implement our tree traversal function. I'll paste it here first and then we will go over it step by step.
+And with that, we can implement our selection function. I'll paste it here first and then we will go over it step by step.
 
 ```python
-def traversal(
-    root_node: Node, max_depth: int, action_selection_fn: Callable[[Node, int], int]
-) -> tuple[Node, int]:
-    class TraversalState(NamedTuple):
-        node: Node # the parent node
-        next_node: Node | None # the child node
-        action: int # the action to perform from the parent node
-        depth: int # the current depth
-        proceed: bool # whether or not to continue
 
-    def _traversal(state: TraversalState) -> TraversalState:
-        node = state.next_node # the current node is last iteration's next node
+class SelectionOutput(NamedTuple):
+    node_to_expand: Node
+    action_to_use: int
+
+
+def selection(
+    root_node: Node, max_depth: int, action_selection_fn: Callable[[Node, int], int]
+) -> SelectionOutput:
+    class SelectionState(NamedTuple):
+        node: Node
+        next_node: Node | None
+        action: int
+        depth: int
+        proceed: bool
+
+    def _traverse(state: SelectionState) -> SelectionState:
+        node = state.next_node
+        assert node is not None
         action = action_selection_fn(node, state.depth)
         child_visited = node.is_child_visited(action)
         if not child_visited:
             next_node = None
         else:
             next_node = node.child_nodes[action]
-        proceed = not child_visited and state.depth + 1 < max_depth
+        proceed = child_visited and state.depth + 1 < max_depth
 
-        return TraversalState(
+        return SelectionState(
             node=node,
             next_node=next_node,
             action=action,
@@ -251,20 +265,21 @@ def traversal(
             proceed=proceed,
         )
 
-    state = TraversalState(
+    state = SelectionState(
         node=root_node, next_node=root_node, action=0, depth=0, proceed=True
     )
 
     while state.proceed:
-        state = _traversal(state)
+        state = _traverse(state)
 
-    return state.node, state.action
+    return SelectionOutput(node_to_expand=state.node, action_to_use=state.action)
+
 ```
 
-The `TraversalState` is simply a struct to keep track of the traversal. We initialize the first state like so:
+The `SelectionState` is simply a struct to keep track of the traversal. We initialize the first state like so:
 
 ```python
-state = TraversalState(
+state = SelectionState(
     node=root_node, next_node=root_node, action=0, depth=0, proceed=True
 )
 ```
@@ -304,4 +319,4 @@ n_actions = 2 # from our environment
 action_selection_function_partial = functools.partial(inner_simulation_fn, n_actions=n_actions)
 ```
 
-We will pass in the partial into the traversal function.
+We will pass the partial into the selection function.
