@@ -159,43 +159,27 @@ Let's start with a node class and put in all the properties we already know a no
 ```python
 from beartype.typing import Any
 
+
+ROOT_INDEX = 0
+
+
+class Action(NamedTuple):
+    action: int
+
+
 class Node:
     index: int
 
-    child_nodes: dict[int, "Node"]
+    child_nodes: dict[Action, "Node"]
     parent_node: "Node | None"
 
+    # some statistics about the node
     visits: int
     value: float
-
-    reward: float
     discount: float
-
-    embedding: Any
-```
-
-The child nodes dictionary maps an action (we're dealing with discrete actions) of type integer to another node. We use the double quotes as a "forward reference" because the `Node` class hasn't been fully defined at that point.
-
-Each `Node` will also have a reference to its parent but not all nodes will have a parent. Actually, only the root node will not have a parent and by checking if `node.parent is None` we can infer if the current node is the root node.
-
-The reward and discount will be values we receive from the environment - more on that later.
-
-We also keep track of the number of visits as well as the node's average value. Lastly, each node will be "assigned a state" from our environment and that will be stored in the `embedding` field. In our example, that will be simply the index of the state (e.g. index $6$, which is the terminal state and gives a reward of 1).
-
-Let's add an `__init__` and a `__repr__` and a helper function:
-
-```python
-class Node:
-    index: int
-
-    child_nodes: dict[int, "Node"]
-    parent_node: "Node | None"
-
-    visits: int
-    value: float
     reward: float
-    discount: float
 
+    # the env state embedding
     embedding: Any
 
     def __init__(self, parent: "Node | None", index: int, embedding: Any) -> None:
@@ -206,12 +190,27 @@ class Node:
         self.child_nodes = dict()
         self.visits, self.value, self.reward, self.discount = 0, 0, 0, 0
 
-    def is_child_visited(self, action) -> bool:
+    def is_child_visited(self, action: Action) -> bool:
         return action in self.child_nodes
 
     def __repr__(self) -> str:
-        return f"[Index: {self.index}, Parent: {self.parent.index if self.parent is not None else None}, Value: {np.round(self.value, 2)}, Visits: {self.visits}]"
+        # just a nicer way to print a node
+        return (
+            f"[Index: {self.index}"
+            f"Parent: {self.parent.index if self.parent is not None else None}"
+            f"Value: {np.round(self.value, 2)}, Visits: {self.visits}]"
+        )
+
 ```
+
+The child nodes dictionary maps an action (we're dealing with discrete actions) of type integer to another node. We use the double quotes as a "forward reference" because the `Node` class hasn't been fully defined at that point.
+
+Each `Node` will also have a reference to its parent but not all nodes will have a parent. Actually, only the root node will not have a parent and by checking if `node.parent is None` we can infer if the current node is the root node.
+
+The reward and discount will be values we receive from the environment - more on that later.
+
+We also keep track of the number of visits as well as the node's average value. Lastly, each node will be "assigned a state" from our environment and that will be stored in the `embedding` field. In our example, that will be simply the index of the state (e.g. index $6$, which is the terminal state and gives a reward of 1).
+
 
 And now, we can initialise our root node:
 
@@ -231,46 +230,66 @@ And with that, we can implement our selection function. I'll paste it here first
 
 ```python
 
+# this is the output of the selection step
+# which contains the node we should expand later, and the action
+# we want to check out
 class SelectionOutput(NamedTuple):
     node_to_expand: Node
-    action_to_use: int
+    action_to_use: Action
+
+# this is the input to the function, which
+# selects the nodes during the tree traversal
+class ActionSelectionInput(NamedTuple):
+    node: Node
+    depth: int
+
+# that function returns an action
+class ActionSelectionReturn(NamedTuple):
+    action: Action
 
 
 def selection(
-    root_node: Node, max_depth: int, action_selection_fn: Callable[[Node, int], int]
+    root_node: Node,
+    max_depth: int,
+    action_selection_fn: Callable[[ActionSelectionInput], ActionSelectionReturn],
 ) -> SelectionOutput:
     class SelectionState(NamedTuple):
         node: Node
         next_node: Node | None
-        action: int
+        action: Action
         depth: int
         proceed: bool
 
-    def _traverse(state: SelectionState) -> SelectionState:
+    def _select(state: SelectionState) -> SelectionState:
         node = state.next_node
         assert node is not None
-        action = action_selection_fn(node, state.depth)
-        child_visited = node.is_child_visited(action)
+        action_selection_output = action_selection_fn(
+            ActionSelectionInput(node, state.depth)
+        )
+        child_visited = node.is_child_visited(action_selection_output.action)
         if not child_visited:
             next_node = None
         else:
-            next_node = node.child_nodes[action]
+            next_node = node.child_nodes[action_selection_output.action]
+        # stop if you reached an unvisited child or the max depth
         proceed = child_visited and state.depth + 1 < max_depth
 
         return SelectionState(
             node=node,
             next_node=next_node,
-            action=action,
+            action=action_selection_output.action,
             depth=state.depth + 1,
             proceed=proceed,
         )
 
+    # initial state
     state = SelectionState(
-        node=root_node, next_node=root_node, action=0, depth=0, proceed=True
+        node=root_node, next_node=root_node, action=Action(0), depth=0, proceed=True
     )
 
     while state.proceed:
-        state = _traverse(state)
+        # keep going until state.proceed is False
+        state = _select(state)
 
     return SelectionOutput(node_to_expand=state.node, action_to_use=state.action)
 
@@ -296,7 +315,8 @@ The answer is: the root node! Now that we have the current node (which is the ro
 We can write a quick method to implement the `action_selection_fn`:
 
 ```python
-def inner_simulation_fn(node: Node, depth: int, n_actions: int):
+def inner_simulation_fn(input_: ActionSelectionInput, n_actions: int):
+    node, depth = input_
     best_action = -1
     best_ucb = float("-inf")
     for action in range(n_actions):
@@ -320,3 +340,22 @@ action_selection_function_partial = functools.partial(inner_simulation_fn, n_act
 ```
 
 We will pass the partial into the selection function.
+
+### Expansion
+
+Ok, we did the selection and we found an unvisited node and the action we want to perform for that node. Now, we will need access to the environment, because we want to know what is the reward, value and the embedding in the new state.
+
+For that, we need to define some new `NamedTuple`, namely:
+
+```python
+class StepFnReturn(NamedTuple):
+    value: float
+    discount: float
+    reward: float
+    embedding: Any
+
+
+class StepFnInput(NamedTuple):
+    embedding: Any
+    action: Action
+```
