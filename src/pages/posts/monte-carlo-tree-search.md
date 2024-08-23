@@ -334,7 +334,6 @@ def inner_simulation_fn(input_: ActionSelectionInput, n_actions: int):
                 best_action = action
     return best_action
 
-
 n_actions = 2 # from our environment
 action_selection_function_partial = functools.partial(inner_simulation_fn, n_actions=n_actions)
 ```
